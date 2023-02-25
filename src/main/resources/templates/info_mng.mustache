@@ -3,6 +3,10 @@
 <body>
 <div class="container mt-3">
     <form class="row g-3">
+        <div class="col-md-1">
+            <label for="name" class="form-label">이름</label>
+            <input type="text" class="form-control" id="name">
+        </div>
         <div class="col-md-4">
             <label for="accessKey" class="form-label">AccessKey</label>
             <input type="text" class="form-control" id="accessKey">
@@ -11,7 +15,7 @@
             <label for="secretKey" class="form-label">SecretKey</label>
             <input type="text" class="form-control" id="secretKey">
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <label for="expireDateTime" class="form-label">만료일시</label>
             <input type="datetime-local" class="form-control" id="expireDateTime">
         </div>
@@ -24,6 +28,7 @@
 <script>
     async function saveAccessInfo() {
         const parmse = {
+            name: $("#name").value,
             accessKey: $("#accessKey").value,
             secretKey: $("#secretKey").value,
             expireDateTime: $("#expireDateTime").value

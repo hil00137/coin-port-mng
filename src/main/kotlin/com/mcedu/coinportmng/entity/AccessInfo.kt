@@ -36,5 +36,5 @@ data class AccessInfo(
     val repositoryType: CoinRepositoryType,
     @CreatedDate
     @Column(name = "created_date")
-    val createdDate: LocalDateTime
+    val createdDate: LocalDateTime = LocalDateTime.now()
 )
