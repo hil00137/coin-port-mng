@@ -7,3 +7,13 @@ function $(selector) {
     }
     return nodeListOf
 }
+
+function clear(selectors) {
+    if (typeof selectors === 'string') {
+      $(selectors).value = null
+    } else if (Array.isArray(selectors)) {
+        selectors.forEach((selector) => {
+            $(selector).value = null
+        })
+    }
+}

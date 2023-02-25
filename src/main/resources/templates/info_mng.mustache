@@ -34,7 +34,8 @@
             expireDateTime: $("#expireDateTime").value
         }
         let response = await post('/api/v1/upbit/access-info', parmse)
-        console.log(response)
+        console.log(`${response}가 저장되었습니다.`)
+        clear("#name", "#accessKey", "#secretKey", "#expireDateTime")
     }
 </script>
 </html>
