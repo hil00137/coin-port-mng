@@ -24,7 +24,7 @@
             secretKey: document.querySelector("#secretKey").value
         }
         let response = await post('/api/v1/upbit/access-info', parmse)
-        if (response.ok) console.log(await response.text())
+        console.log(response)
     }
 </script>
 </html>
