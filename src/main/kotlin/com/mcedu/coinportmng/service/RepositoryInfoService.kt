@@ -1,7 +1,7 @@
 package com.mcedu.coinportmng.service
 
-import com.mcedu.coinportmng.controller.Request
 import com.mcedu.coinportmng.dto.AccessInfoDto
+import com.mcedu.coinportmng.dto.UpbitInfoSaveRequest
 import com.mcedu.coinportmng.entity.AccessInfo
 import com.mcedu.coinportmng.repository.AccessInfoRepository
 import com.mcedu.coinportmng.type.CoinRepositoryType
@@ -18,7 +18,7 @@ class RepositoryInfoService(
     }
 
     @Transactional
-    fun saveAccessInfo(request: Request, type: CoinRepositoryType): Long {
+    fun saveAccessInfo(request: UpbitInfoSaveRequest, type: CoinRepositoryType): Long {
         val info = accessInfoRepository.save(
             AccessInfo(
                 null,
