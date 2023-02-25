@@ -22,8 +22,9 @@ class RestController(
     }
 
     @PostMapping("/v1/upbit/access-info")
-    fun saveAccessInfo(@RequestBody request: Request) {
+    fun saveAccessInfo(@RequestBody request: Request): String {
         log.info("{}", request)
+        return "success"
     }
 }
 

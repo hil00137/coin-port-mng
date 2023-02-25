@@ -18,19 +18,13 @@
 </div>
 </body>
 <script>
-    function saveAccessInfo() {
-        fetch('/api/v1/upbit/access-info', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                accessKey: document.querySelector("#accessKey").value,
-                secretKey: document.querySelector("#secretKey").value
-            })
-        }).then((response) => {
-            if (response.ok) return response.text()
-        })
+    async function saveAccessInfo() {
+        const parmse = {
+            accessKey: document.querySelector("#accessKey").value,
+            secretKey: document.querySelector("#secretKey").value
+        }
+        let response = await post('/api/v1/upbit/access-info', parmse)
+        if (response.ok) console.log(await response.text())
     }
 </script>
 </html>
