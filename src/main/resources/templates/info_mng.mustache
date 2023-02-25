@@ -3,13 +3,17 @@
 <body>
 <div class="container mt-3">
     <form class="row g-3">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <label for="accessKey" class="form-label">AccessKey</label>
             <input type="text" class="form-control" id="accessKey">
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
             <label for="secretKey" class="form-label">SecretKey</label>
             <input type="text" class="form-control" id="secretKey">
+        </div>
+        <div class="col-md-4">
+            <label for="expireDateTime" class="form-label">만료일시</label>
+            <input type="datetime-local" class="form-control" id="expireDateTime">
         </div>
         <div class="col-12">
             <button type="button" class="btn btn-primary" onclick="saveAccessInfo()">저장하기</button>
@@ -21,7 +25,8 @@
     async function saveAccessInfo() {
         const parmse = {
             accessKey: $("#accessKey").value,
-            secretKey: $("#secretKey").value
+            secretKey: $("#secretKey").value,
+            expireDateTime: $("#expireDateTime").value
         }
         let response = await post('/api/v1/upbit/access-info', parmse)
         console.log(response)

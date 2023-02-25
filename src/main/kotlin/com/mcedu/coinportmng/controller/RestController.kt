@@ -1,13 +1,12 @@
 package com.mcedu.coinportmng.controller
 
+import com.fasterxml.jackson.annotation.JsonFormat
 import com.mcedu.coinportmng.dto.AccessInfoDto
 import com.mcedu.coinportmng.service.RepositoryInfoService
 import org.slf4j.LoggerFactory
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.*
 import org.springframework.web.bind.annotation.RestController
+import java.time.LocalDateTime
 
 @RestController
 @RequestMapping("/api")
@@ -31,4 +30,6 @@ class RestController(
 data class Request(
     val accessKey: String,
     val secretKey: String,
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    val expireDateTime: LocalDateTime
 )

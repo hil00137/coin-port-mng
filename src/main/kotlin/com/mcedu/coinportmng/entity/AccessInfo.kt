@@ -29,6 +29,8 @@ data class AccessInfo(
     val accessKey: String,
     @Column(name = "secret_key", length = 50)
     val secretKey: String,
+    @Column(name = "expire_date_time")
+    val expireDateTime: LocalDateTime,
     @Enumerated(EnumType.STRING)
     @Column(name = "repository_type", length = 20)
     val repositoryType: CoinRepositoryType,
