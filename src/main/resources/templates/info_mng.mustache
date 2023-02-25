@@ -1,0 +1,36 @@
+<html lang="kr">
+{{> layout/header }}
+<body>
+<div class="container mt-3">
+    <form class="row g-3">
+        <div class="col-md-6">
+            <label for="accessKey" class="form-label">AccessKey</label>
+            <input type="text" class="form-control" id="accessKey">
+        </div>
+        <div class="col-md-6">
+            <label for="secretKey" class="form-label">SecretKey</label>
+            <input type="text" class="form-control" id="secretKey">
+        </div>
+        <div class="col-12">
+            <button type="button" class="btn btn-primary" onclick="saveAccessInfo()">저장하기</button>
+        </div>
+    </form>
+</div>
+</body>
+<script>
+    function saveAccessInfo() {
+        fetch('/api/v1/upbit/access-info', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                accessKey: document.querySelector("#accessKey").value,
+                secretKey: document.querySelector("#secretKey").value
+            })
+        }).then((response) => {
+            if (response.ok) return response.text()
+        })
+    }
+</script>
+</html>

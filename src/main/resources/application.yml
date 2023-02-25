@@ -16,3 +16,7 @@ spring:
 logging:
   level:
     org.springframework: info
+server:
+  servlet:
+    encoding:
+      force-response: true
