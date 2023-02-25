@@ -20,8 +20,8 @@
 <script>
     async function saveAccessInfo() {
         const parmse = {
-            accessKey: document.querySelector("#accessKey").value,
-            secretKey: document.querySelector("#secretKey").value
+            accessKey: $("#accessKey").value,
+            secretKey: $("#secretKey").value
         }
         let response = await post('/api/v1/upbit/access-info', parmse)
         console.log(response)
