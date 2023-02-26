@@ -5,8 +5,10 @@ import com.mcedu.coinportmng.dto.UpbitInfoSaveRequest
 import com.mcedu.coinportmng.entity.AccessInfo
 import com.mcedu.coinportmng.repository.AccessInfoRepository
 import com.mcedu.coinportmng.type.CoinRepositoryType
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.lang.RuntimeException
 
 @Service
 class RepositoryInfoService(
@@ -30,5 +32,11 @@ class RepositoryInfoService(
             )
         )
         return info.seq ?: 0
+    }
+
+    @Transactional
+    fun deleteAccessInfo(infoSeq: Long) {
+        val accessInfo = accessInfoRepository.findByIdOrNull(infoSeq) ?: throw RuntimeException("존재하지 않는 정보입니다.")
+        accessInfoRepository.delete(accessInfo)
     }
 }

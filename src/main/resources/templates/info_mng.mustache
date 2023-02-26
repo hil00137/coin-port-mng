@@ -33,6 +33,7 @@
             <th scope="col">AccessKey</th>
             <th scope="col">SecretKey</th>
             <th scope="col">만료일시</th>
+            <th scope="col">삭제버튼</th>
         </tr>
         </thead>
         <tbody id="table-body">
@@ -47,6 +48,7 @@
         <td>{accessKey}</td>
         <td>{secretKey}</td>
         <td>{expireTime}</td>
+        <td><button type="button" class="btn btn-danger" onclick="deleteAccessInfo({seq})">삭제</button></td>
     </tr>
 </script>
 <script>
@@ -57,9 +59,21 @@
             secretKey: $("#secretKey").value,
             expireDateTime: $("#expireDateTime").value
         }
-        let response = await post('/api/v1/upbit/access-info', parmse)
+        let response = await POST('/api/v1/upbit/access-info', parmse)
         console.log(`${response}가 저장되었습니다.`)
         clear("#name", "#accessKey", "#secretKey", "#expireDateTime")
+    }
+
+    async function deleteAccessInfo(seq) {
+        if (typeof seq === 'undefined') {
+            alert("잘못된 요청입니다.")
+            return
+        }
+
+        let data = await DELETE(`/api/v1/upbit/access-info/${seq}`);
+        if (data == null) {
+            await table.callList()
+        }
     }
 
 
@@ -69,7 +83,7 @@
             this.callList()
         },
         callList: async function () {
-            let response = await get('/api/v1/upbit/access-info');
+            let response = await GET('/api/v1/upbit/access-info');
             this.tableBody.innerHTML = ''
             response.data.forEach((value, index) => {
                 const param = {
@@ -78,7 +92,6 @@
                 }
                 this.tableBody.insertAdjacentHTML("beforeend", handleBarsCompile("#table-body-row-template", param))
             })
-            console.log(response.data)
         }
     }
 
