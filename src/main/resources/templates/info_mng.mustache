@@ -24,6 +24,21 @@
         </div>
     </form>
 </div>
+<div class="container mt-3">
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">#</th>
+            <th scope="col">이름</th>
+            <th scope="col">AccessKey</th>
+            <th scope="col">SecretKey</th>
+            <th scope="col">만료일시</th>
+        </tr>
+        </thead>
+        <tbody id="table-body">
+        </tbody>
+    </table>
+</div>
 </body>
 <script id="table-body-row-template" type="text/x-handlebars-template">
     <tr>
@@ -46,5 +61,28 @@
         console.log(`${response}가 저장되었습니다.`)
         clear("#name", "#accessKey", "#secretKey", "#expireDateTime")
     }
+
+
+    const table = {
+        tableBody: $('#table-body'),
+        init: function () {
+            this.callList()
+        },
+        callList: async function () {
+            let response = await get('/api/v1/upbit/access-info');
+            this.tableBody.innerHTML = ''
+            response.data.forEach((value, index) => {
+                const param = {
+                    row : index + 1,
+                    ...value
+                }
+                this.tableBody.insertAdjacentHTML("beforeend", handleBarsCompile("#table-body-row-template", param))
+            })
+            console.log(response.data)
+        }
+    }
+
+    table.init();
+
 </script>
 </html>

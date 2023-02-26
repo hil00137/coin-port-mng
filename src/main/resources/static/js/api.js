@@ -8,3 +8,13 @@ async function post(url, params) {
     })
     return response.json()
 }
+
+async function get(url) {
+    const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    return response.json()
+}

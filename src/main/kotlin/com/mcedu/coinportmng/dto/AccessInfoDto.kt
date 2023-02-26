@@ -11,7 +11,7 @@ data class AccessInfoDto(
     val secretKey: String,
     val repositoryType: String,
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
-    val createdDate: LocalDateTime
+    val expireTime: LocalDateTime
 ) {
     companion object {
         fun fromEntity(accessInfo: AccessInfo): AccessInfoDto {
@@ -21,7 +21,7 @@ data class AccessInfoDto(
                 accessKey =  accessInfo.accessKey,
                 secretKey = accessInfo.secretKey,
                 repositoryType = accessInfo.repositoryType.krNm,
-                createdDate = accessInfo.createdDate
+                expireTime = accessInfo.expireDateTime
             )
         }
     }
