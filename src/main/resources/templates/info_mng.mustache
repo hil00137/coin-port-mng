@@ -25,6 +25,15 @@
     </form>
 </div>
 </body>
+<script id="table-body-row-template" type="text/x-handlebars-template">
+    <tr>
+        <th scope="row">{row}</th>
+        <td>{name}</td>
+        <td>{accessKey}</td>
+        <td>{secretKey}</td>
+        <td>{expireTime}</td>
+    </tr>
+</script>
 <script>
     async function saveAccessInfo() {
         const parmse = {
