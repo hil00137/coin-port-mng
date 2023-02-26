@@ -20,3 +20,6 @@ server:
   servlet:
     encoding:
       force-response: true
+
+url:
+  upbit: https://api.upbit.com
