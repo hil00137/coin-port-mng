@@ -6,7 +6,6 @@ import com.mcedu.coinportmng.dto.UpbitInfoSaveRequest
 import com.mcedu.coinportmng.service.RepositoryInfoService
 import com.mcedu.coinportmng.type.CoinRepositoryType
 import org.slf4j.LoggerFactory
-import org.springframework.util.StringUtils
 import org.springframework.web.bind.annotation.*
 import org.springframework.web.bind.annotation.RestController
 import java.lang.NumberFormatException
@@ -14,7 +13,7 @@ import java.lang.RuntimeException
 
 @RestController
 @RequestMapping("/api")
-class RestController(
+class UpbitInfoController(
     private val repositoryInfoService: RepositoryInfoService
 ) {
 
