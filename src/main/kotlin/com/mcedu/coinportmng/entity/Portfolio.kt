@@ -21,12 +21,12 @@ import java.time.LocalDateTime
 data class Portfolio(
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = Sequence.PORTFOLIO + "_gen")
-    val seq: Long?,
+    val seq: Long? = null,
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "access_info_seq", referencedColumnName = "seq")
     val accessInfo: AccessInfo,
     val ticker: String,
-    val ratio: Double,
+    var ratio: Double,
     @CreatedDate
-    val createdDate: LocalDateTime
+    val createdDate: LocalDateTime = LocalDateTime.now()
 )
