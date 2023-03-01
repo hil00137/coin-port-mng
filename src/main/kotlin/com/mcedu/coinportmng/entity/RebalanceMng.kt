@@ -26,16 +26,16 @@ data class RebalanceMng(
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "access_info_seq", referencedColumnName = "seq")
     val accessInfo: AccessInfo,
-    val baseMonth: Int,
-    val baseDay: Int,
-    val baseTime: Int,
+    var baseMonth: Int,
+    var baseDay: Int,
+    var baseTime: Int,
     @Column(name = "execute_interval")
-    val interval: String,
+    var interval: String,
     val bandRebalance: Boolean = false,
     val bandCheck: Double? = null,
-    val active: Boolean = false,
+    var active: Boolean = false,
     @CreatedDate
-    val createdDate: LocalDateTime,
+    val createdDate: LocalDateTime = LocalDateTime.now(),
     @LastModifiedDate
-    val updatedDate: LocalDateTime
+    val updatedDate: LocalDateTime = LocalDateTime.now()
 )
