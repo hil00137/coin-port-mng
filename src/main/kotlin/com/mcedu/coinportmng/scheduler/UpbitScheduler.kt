@@ -29,7 +29,10 @@ class UpbitScheduler(
     @Transactional
     fun updateCoinInfos() {
         log.info("코인 정보 업데이트")
-        val coinMap = coinRepository.findAll().associateBy { it.ticker }.toMutableMap()
+        val coinMap = coinRepository.findAll().map {
+            it.resetMarket()
+            it
+        }.associateBy { it.ticker }.toMutableMap()
         val newCoinList = mutableListOf<Coin>()
         upbitService.getMarketAll().forEach {
             val strs = it.market.split("-")

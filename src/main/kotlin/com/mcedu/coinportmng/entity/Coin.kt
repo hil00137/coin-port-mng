@@ -35,4 +35,10 @@ data class Coin(
         }
         lastUpdateTime = LocalDateTime.now()
     }
+
+    fun resetMarket() {
+        this.krwMarket = IsYN.N
+        this.btcMarket = IsYN.N
+        this.usdtMarket = IsYN.N
+    }
 }
