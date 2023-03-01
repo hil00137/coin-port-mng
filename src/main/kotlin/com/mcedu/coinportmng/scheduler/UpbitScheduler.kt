@@ -10,6 +10,7 @@ import com.mcedu.coinportmng.common.IntervalConstant.TEN_MINUTELY
 import com.mcedu.coinportmng.common.IntervalConstant.YEARLY
 import com.mcedu.coinportmng.entity.Coin
 import com.mcedu.coinportmng.entity.RebalanceMng
+import com.mcedu.coinportmng.extention.getSecondsOfDay
 import com.mcedu.coinportmng.repository.CoinRepository
 import com.mcedu.coinportmng.service.UpbitService
 import org.slf4j.LoggerFactory
@@ -85,8 +86,4 @@ class UpbitScheduler(
 
     private fun checkIntervalYear(rebalanceMng: RebalanceMng, now: LocalDateTime): Boolean =
         rebalanceMng.baseMonth == now.monthValue && rebalanceMng.baseDay == now.dayOfMonth && rebalanceMng.baseTime == now.getSecondsOfDay()
-}
-
-fun LocalDateTime.getSecondsOfDay(): Int {
-    return ((this.hour * 60) + this.minute) * 60 + this.second
 }
