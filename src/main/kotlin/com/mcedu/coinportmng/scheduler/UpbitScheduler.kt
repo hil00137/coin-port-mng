@@ -12,6 +12,7 @@ import com.mcedu.coinportmng.entity.Coin
 import com.mcedu.coinportmng.entity.RebalanceMng
 import com.mcedu.coinportmng.extention.getSecondsOfDay
 import com.mcedu.coinportmng.repository.CoinRepository
+import com.mcedu.coinportmng.repository.RebalanceMngRepository
 import com.mcedu.coinportmng.service.UpbitService
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
@@ -22,7 +23,8 @@ import java.time.LocalDateTime
 @Component
 class UpbitScheduler(
     private val upbitService: UpbitService,
-    private val coinRepository: CoinRepository
+    private val coinRepository: CoinRepository,
+    private val rebalanceMngRepository: RebalanceMngRepository
 ) {
     private val log = LoggerFactory.getLogger(this::class.java)
     @Scheduled(cron = "0 0 * * * *")
@@ -57,8 +59,10 @@ class UpbitScheduler(
     @Transactional
     fun rebalnceTargetCheck() {
         val now = LocalDateTime.now().withSecond(0)
-        // TODO: getRebalanceMng
-        // TODO: for innerCheck
+        val rebalanceMngs = rebalanceMngRepository.findAllByActive()
+        rebalanceMngs.forEach {
+            innerCheck(it, now)
+        }
     }
 
     fun innerCheck(rebalanceMng: RebalanceMng, now: LocalDateTime) {
@@ -75,6 +79,7 @@ class UpbitScheduler(
         }
         if (isExecute) {
             //TODO: execute
+            log.info("execute")
         }
     }
 

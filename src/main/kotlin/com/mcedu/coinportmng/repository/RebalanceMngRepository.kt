@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface RebalanceMngRepository : JpaRepository<RebalanceMng, Long> {
     fun findRebalanceMngByAccessInfo(accessInfo: AccessInfo): RebalanceMng?
+    fun findAllByActive(active: Boolean = true): List<RebalanceMng>
 }
