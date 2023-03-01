@@ -1,5 +1,13 @@
 package com.mcedu.coinportmng.scheduler
 
+import com.mcedu.coinportmng.common.IntervalConstant.DAILY
+import com.mcedu.coinportmng.common.IntervalConstant.FIVE_MINUTELY
+import com.mcedu.coinportmng.common.IntervalConstant.HALF_HOURLY
+import com.mcedu.coinportmng.common.IntervalConstant.HOURLY
+import com.mcedu.coinportmng.common.IntervalConstant.MONTHLY
+import com.mcedu.coinportmng.common.IntervalConstant.QUARTER_HOURLY
+import com.mcedu.coinportmng.common.IntervalConstant.TEN_MINUTELY
+import com.mcedu.coinportmng.common.IntervalConstant.YEARLY
 import com.mcedu.coinportmng.entity.Coin
 import com.mcedu.coinportmng.entity.RebalanceMng
 import com.mcedu.coinportmng.repository.CoinRepository
@@ -50,16 +58,15 @@ class UpbitScheduler(
     }
 
     fun innerCheck(rebalanceMng: RebalanceMng, now: LocalDateTime) {
-        val interval = rebalanceMng.interval
-        val isExecute = when (interval) {
-            "y" -> checkIntervalYear(rebalanceMng, now)
-            "M" -> checkIntervalMonth(rebalanceMng, now)
-            "d" -> checkIntervalDay(rebalanceMng, now)
-            "h" -> checkIntervalSeconds(rebalanceMng, now, 3600)
-            "30m" -> checkIntervalSeconds(rebalanceMng, now, 1800)
-            "15m" -> checkIntervalSeconds(rebalanceMng, now, 900)
-            "10m" -> checkIntervalSeconds(rebalanceMng, now, 600)
-            "5m" -> checkIntervalSeconds(rebalanceMng, now, 300)
+        val isExecute = when (rebalanceMng.interval) {
+            YEARLY -> checkIntervalYear(rebalanceMng, now)
+            MONTHLY -> checkIntervalMonth(rebalanceMng, now)
+            DAILY -> checkIntervalDay(rebalanceMng, now)
+            HOURLY -> checkIntervalSeconds(rebalanceMng, now, 3600)
+            HALF_HOURLY -> checkIntervalSeconds(rebalanceMng, now, 1800)
+            QUARTER_HOURLY -> checkIntervalSeconds(rebalanceMng, now, 900)
+            TEN_MINUTELY -> checkIntervalSeconds(rebalanceMng, now, 600)
+            FIVE_MINUTELY -> checkIntervalSeconds(rebalanceMng, now, 300)
             else -> false
         }
         if (isExecute) {
