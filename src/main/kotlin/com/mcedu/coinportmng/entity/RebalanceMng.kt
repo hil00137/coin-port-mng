@@ -31,6 +31,8 @@ data class RebalanceMng(
     val baseTime: Int,
     @Column(name = "execute_interval")
     val interval: String,
+    val bandRebalance: Boolean = false,
+    val bandCheck: Double? = null,
     val active: Boolean = false,
     @CreatedDate
     val createdDate: LocalDateTime,
