@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.mcedu.coinportmng.dto.UpbitCoinInfo
+import com.mcedu.coinportmng.dto.UpbitCoinPriceDto
 import com.mcedu.coinportmng.dto.UpbitWalletInfo
 import com.mcedu.coinportmng.repository.AccessInfoRepository
 import org.slf4j.LoggerFactory
@@ -72,5 +73,21 @@ class UpbitService(
             object : ParameterizedTypeReference<List<UpbitCoinInfo>>() {}
         )
         return exchange.body ?: emptyList()
+    }
+
+    fun getCurrentPrice(market: HashSet<String>): List<UpbitCoinPriceDto> {
+        if (market.isEmpty()) {
+            return emptyList()
+        }
+        val markets = market.joinToString(separator = ",")
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        val uri =
+            UriComponentsBuilder.fromUriString("$apiUrl/v1/ticker").queryParam("markets", markets).build().toUri()
+        val exchange = restTemplate.exchange(
+            RequestEntity<String>(headers, HttpMethod.GET, uri),
+            object : ParameterizedTypeReference<List<UpbitCoinPriceDto>>() {}
+        )
+        return exchange.body?: emptyList()
     }
 }
