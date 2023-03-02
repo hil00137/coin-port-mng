@@ -39,7 +39,9 @@ class RebalanceMngService(
                     baseDay = planDto.baseDay,
                     baseTime = baseTime,
                     interval = planDto.interval,
-                    active = planDto.active
+                    active = planDto.active,
+                    bandRebalance = planDto.bandRebalnce,
+                    bandCheck = planDto.bandCheck
                 )
             )
         } else {
@@ -49,6 +51,8 @@ class RebalanceMngService(
                 this.baseTime = baseTime
                 this.interval = planDto.interval
                 this.active = planDto.active
+                this.bandRebalance = planDto.bandRebalnce
+                this.bandCheck = planDto.bandCheck
             }
         }
     }
@@ -74,6 +78,10 @@ class RebalanceMngService(
 
         if (!IntervalConstant.all.contains(planDto.interval)) {
             throw RuntimeException("주기는 다음과 같습니다. ${IntervalConstant.all}")
+        }
+
+        if (planDto.bandCheck <= 0) {
+            throw RuntimeException("밴드 체크는 0 초과여야합니다.")
         }
     }
 }
