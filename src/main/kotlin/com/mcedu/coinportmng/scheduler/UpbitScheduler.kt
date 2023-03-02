@@ -101,19 +101,20 @@ class UpbitScheduler(
         val hasMarketWallet = accounts.filter { coinMap.containsKey(it.currency) || it.currency == "KRW" }
         var portfolios = portfolioRepository.findAllByAccessInfo(rebalanceMng.accessInfo).associateBy { it.ticker }
             .mapValues { it.value.ratio }
-        val planSum = portfolios.values.sum()
-        portfolios = portfolios.mapValues { it.value / planSum }
-
         val currentPortfolio = getCurrentPortfolio(hasMarketWallet, coinMap)
-        val currentSum = currentPortfolio.values.sum()
-        val pairMap = currentPortfolio.mapValues { Pair(it.value, it.value / currentSum) }
 
         for (planKey in portfolios.keys) {
-            if (!pairMap.containsKey(planKey)) {
+            if (!currentPortfolio.containsKey(planKey)) {
                 log.info("$planKey > add target")
                 return true
             }
         }
+
+        val planSum = portfolios.values.sum()
+        portfolios = portfolios.mapValues { it.value / planSum }
+
+        val currentSum = currentPortfolio.values.sum()
+        val pairMap = currentPortfolio.mapValues { Pair(it.value, it.value / currentSum) }
 
         for ((key, pair) in pairMap) {
             if (pair.first < 5000) {
