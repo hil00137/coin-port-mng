@@ -2,15 +2,10 @@ package com.mcedu.coinportmng.service
 
 import com.auth0.jwt.JWT
 import com.auth0.jwt.algorithms.Algorithm
-import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.databind.PropertyNamingStrategies.SnakeCaseStrategy
-import com.fasterxml.jackson.databind.PropertyNamingStrategy
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.mcedu.coinportmng.dto.UpbitCoinInfo
+import com.mcedu.coinportmng.dto.UpbitWalletInfo
 import com.mcedu.coinportmng.repository.AccessInfoRepository
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -24,8 +19,6 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.client.RestTemplate
-import org.springframework.web.util.UriBuilder
-import org.springframework.web.util.UriBuilderFactory
 import org.springframework.web.util.UriComponentsBuilder
 import java.net.URI
 import java.util.*
@@ -48,7 +41,7 @@ class UpbitService(
     }
 
     @Transactional(readOnly = true)
-    fun getMyAccounts(seq: Long): String {
+    fun getMyAccounts(seq: Long): List<UpbitWalletInfo> {
         val accessInfo = accessInfoRepository.findByIdOrNull(seq) ?: throw RuntimeException("존재하지 않는 저장소 정보입니다.")
         val algorithm = Algorithm.HMAC256(accessInfo.secretKey)
         val jwtToken = JWT.create()
@@ -63,10 +56,10 @@ class UpbitService(
 
         val exchange = restTemplate.exchange(
             RequestEntity<String>(headers, HttpMethod.GET, URI("$apiUrl/v1/accounts")),
-            String::class.java
+            object :ParameterizedTypeReference<List<UpbitWalletInfo>>() {}
         )
 
-        return exchange.body ?: ""
+        return exchange.body ?: emptyList()
     }
 
     fun getMarketAll(): List<UpbitCoinInfo> {
