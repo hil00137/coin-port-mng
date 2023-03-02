@@ -9,7 +9,6 @@ import com.mcedu.coinportmng.common.IntervalConstant.MONTHLY
 import com.mcedu.coinportmng.common.IntervalConstant.QUARTER_HOURLY
 import com.mcedu.coinportmng.common.IntervalConstant.TEN_MINUTELY
 import com.mcedu.coinportmng.common.IntervalConstant.YEARLY
-import com.mcedu.coinportmng.common.MainMarket
 import com.mcedu.coinportmng.common.MainMarket.BTC_USDT
 import com.mcedu.coinportmng.common.MainMarket.KRW_BTC
 import com.mcedu.coinportmng.common.Market
@@ -18,6 +17,7 @@ import com.mcedu.coinportmng.entity.Coin
 import com.mcedu.coinportmng.entity.RebalanceMng
 import com.mcedu.coinportmng.extention.getSecondsOfDay
 import com.mcedu.coinportmng.repository.CoinRepository
+import com.mcedu.coinportmng.repository.PortfolioRepository
 import com.mcedu.coinportmng.repository.RebalanceMngRepository
 import com.mcedu.coinportmng.service.UpbitService
 import com.mcedu.coinportmng.type.IsYN
@@ -26,11 +26,13 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
+import kotlin.math.abs
 
 @Component
 class UpbitScheduler(
     private val upbitService: UpbitService,
     private val coinRepository: CoinRepository,
+    private val portfolioRepository: PortfolioRepository,
     private val rebalanceMngRepository: RebalanceMngRepository
 ) {
     private val log = LoggerFactory.getLogger(this::class.java)
@@ -70,14 +72,12 @@ class UpbitScheduler(
         val rebalanceMngs = rebalanceMngRepository.findAllByActive()
         val executeSet = mutableSetOf<RebalanceMng>()
         rebalanceMngs.forEach {
-            if (intervalCheck(it, now)) {
-                log.info("execute")
-                executeSet.add(it)
-            } else if (it.bandRebalance && bandCheck(it)) {
+            if (intervalCheck(it, now) || (it.bandRebalance && bandCheck(it))) {
                 log.info("execute")
                 executeSet.add(it)
             }
         }
+        // TODO: exectueSet Check And Save
     }
 
     fun intervalCheck(rebalanceMng: RebalanceMng, now: LocalDateTime): Boolean {
@@ -99,8 +99,38 @@ class UpbitScheduler(
         val currencyStrs = accounts.map { it.currency }
         val coinMap = coinRepository.findAllById(currencyStrs).associateBy { it.ticker }
         val hasMarketWallet = accounts.filter { coinMap.containsKey(it.currency) || it.currency == "KRW" }
+        var portfolios = portfolioRepository.findAllByAccessInfo(rebalanceMng.accessInfo).associateBy { it.ticker }
+            .mapValues { it.value.ratio }
+        val planSum = portfolios.values.sum()
+        portfolios = portfolios.mapValues { it.value / planSum }
+
         val currentPortfolio = getCurrentPortfolio(hasMarketWallet, coinMap)
-        log.info(currentPortfolio.toString())
+        val currentSum = currentPortfolio.values.sum()
+        val pairMap = currentPortfolio.mapValues { Pair(it.value, it.value / currentSum) }
+
+        for (planKey in portfolios.keys) {
+            if (!pairMap.containsKey(planKey)) {
+                log.info("$planKey > add target")
+                return true
+            }
+        }
+
+        for ((key, pair) in pairMap) {
+            if (pair.first < 5000) {
+                log.info("$key > not enough money skip")
+                continue
+            }
+            val plan = portfolios[key]
+            if (plan == null) {
+                log.info("$key > remove target")
+                return true
+            }
+
+            if((abs(pair.second - plan) / plan) * 100.0 > rebalanceMng.bandCheck) {
+                log.info("$key > plan : ${plan * 100} , now : ${pair.second * 100} ")
+                return true
+            }
+        }
 
         return false
     }
