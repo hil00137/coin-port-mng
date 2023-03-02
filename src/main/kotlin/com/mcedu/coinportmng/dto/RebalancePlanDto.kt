@@ -9,7 +9,7 @@ data class RebalancePlanDto(
     val baseMinute: Int,
     val interval: String,
     val active: Boolean,
-    val bandRebalnce: Boolean,
+    val bandRebalance: Boolean,
     val bandCheck: Double
 ) {
     constructor(rebalanceMng: RebalanceMng) : this(
@@ -19,7 +19,7 @@ data class RebalancePlanDto(
         baseMinute = (rebalanceMng.baseTime % 3600) / 60,
         interval = rebalanceMng.interval,
         active = rebalanceMng.active,
-        bandRebalnce = rebalanceMng.bandRebalance,
+        bandRebalance = rebalanceMng.bandRebalance,
         bandCheck = rebalanceMng.bandCheck
     )
 }

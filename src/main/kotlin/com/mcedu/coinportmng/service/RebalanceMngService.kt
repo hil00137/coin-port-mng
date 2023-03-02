@@ -40,7 +40,7 @@ class RebalanceMngService(
                     baseTime = baseTime,
                     interval = planDto.interval,
                     active = planDto.active,
-                    bandRebalance = planDto.bandRebalnce,
+                    bandRebalance = planDto.bandRebalance,
                     bandCheck = planDto.bandCheck
                 )
             )
@@ -51,7 +51,7 @@ class RebalanceMngService(
                 this.baseTime = baseTime
                 this.interval = planDto.interval
                 this.active = planDto.active
-                this.bandRebalance = planDto.bandRebalnce
+                this.bandRebalance = planDto.bandRebalance
                 this.bandCheck = planDto.bandCheck
             }
         }
