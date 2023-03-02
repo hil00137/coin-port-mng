@@ -127,8 +127,9 @@ class UpbitScheduler(
                 return true
             }
 
-            if((abs(pair.second - plan) / plan) * 100.0 > rebalanceMng.bandCheck) {
-                log.info("$key > plan : ${plan * 100} , now : ${pair.second * 100} ")
+            val overPercent = (abs(pair.second - plan) / plan) * 100.0
+            if(overPercent > rebalanceMng.bandCheck) {
+                log.info("$key > plan : ${plan * 100} , now : ${pair.second * 100} , over : $overPercent")
                 return true
             }
         }
