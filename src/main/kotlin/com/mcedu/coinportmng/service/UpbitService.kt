@@ -5,13 +5,9 @@ import com.auth0.jwt.algorithms.Algorithm
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.google.gson.Gson
-import com.mcedu.coinportmng.dto.UpbitCoinInfo
-import com.mcedu.coinportmng.dto.UpbitCoinPriceDto
-import com.mcedu.coinportmng.dto.UpbitOrderResponse
-import com.mcedu.coinportmng.dto.UpbitWalletInfo
+import com.mcedu.coinportmng.dto.*
 import com.mcedu.coinportmng.repository.AccessInfoRepository
-import com.mcedu.coinportmng.scheduler.Command
-import com.mcedu.coinportmng.scheduler.CommandType
+import com.mcedu.coinportmng.type.CommandType
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.ParameterizedTypeReference
