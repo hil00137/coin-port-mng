@@ -34,8 +34,11 @@ class RebalanceScheduler(
         }
         if (job.status == ReblanceJobStatus.DOING) {
             if (currentJob.jobSeq == null) {
+                currentJob.jobStatus = ReblanceJobStatus.DOING
                 currentJob.jobSeq = job.seq
-                currentJob.jobStatus = ReblanceJobStatus.RECOVERY
+                currentJob.infoSeq = job.accessInfo.seq
+                val portfolios = portfolioService.getPortfolios(job.accessInfo.seq ?: 0).associateBy { it.ticker }
+                currentJob.portfolios = portfolios
             }
             return
         }
@@ -53,22 +56,40 @@ class RebalanceScheduler(
     fun checkTarget() {
         val jobSeq = currentJob.jobSeq ?: return
         val infoSeq = currentJob.infoSeq ?: return
-        if (currentJob.jobStatus == ReblanceJobStatus.DOING) {
-            val command = portfolioCheck()
-            when (command.commandType) {
-                CommandType.SELL -> {
-                    currentJob.jobStatus = ReblanceJobStatus.SELL
-                    currentJob.command = command
+        when (currentJob.jobStatus) {
+            ReblanceJobStatus.DOING -> {
+                val command = portfolioCheck()
+                when (command.commandType) {
+                    CommandType.SELL -> {
+                        currentJob.jobStatus = ReblanceJobStatus.SELL
+                        currentJob.command = command
+                    }
+                    CommandType.BUY -> {
+                        currentJob.jobStatus = ReblanceJobStatus.BUY
+                        currentJob.command = command
+                    }
+                    CommandType.NONE -> log.info("stop")
                 }
-                CommandType.BUY -> log.info("buy")
-                CommandType.NONE -> log.info("stop")
             }
-        } else if (currentJob.jobStatus == ReblanceJobStatus.SELL) {
-            log.info("sell")
-            currentJob.response = upbitService.sell(infoSeq, currentJob.command)
-            currentJob.jobStatus = ReblanceJobStatus.SELL_DONE
-        } else if (currentJob.jobStatus == ReblanceJobStatus.SELL_DONE) {
-            log.info("sell done")
+            ReblanceJobStatus.SELL -> {
+                log.info("sell")
+                currentJob.response = upbitService.sell(infoSeq, currentJob.command)
+                currentJob.jobStatus = ReblanceJobStatus.ORDER
+            }
+            ReblanceJobStatus.ORDER -> {
+                log.info("ORDER $currentJob")
+            }
+            ReblanceJobStatus.BUY -> {
+                log.info("buy")
+                currentJob.response = upbitService.buy(infoSeq, currentJob.command)
+                currentJob.jobStatus = ReblanceJobStatus.ORDER
+            }
+            ReblanceJobStatus.RECOVERY -> {
+                log.info("recovery")
+            }
+            else -> {
+                log.info(currentJob.toString())
+            }
         }
     }
 
@@ -97,11 +118,11 @@ class RebalanceScheduler(
                 log.info("$key > not enough money skip")
                 continue
             }
-            val plan = portfolios[key]?.let { it / 100.0 }
+            val plan = portfolios[key]
             val balance = walletInfoMap[key]?.balance ?: 0.0
             if (plan == null) {
                 log.info("$key > sell target")
-                return Command(CommandType.SELL, key, balance)
+                return Command(CommandType.SELL, key, volume = balance)
             }
 
             if (plan < pair.second) {
@@ -112,7 +133,7 @@ class RebalanceScheduler(
                     continue
                 }
 
-                return Command(CommandType.SELL, key, (balance * sellPercent))
+                return Command(CommandType.SELL, key, volume = (balance * sellPercent))
             }
 
             if (plan > pair.second) {
@@ -121,22 +142,22 @@ class RebalanceScheduler(
                     log.info("$key > not enough money skip")
                     continue
                 }
-                tempBuyCommand.add(Command(CommandType.BUY, key, notEnoughMoney))
+                tempBuyCommand.add(Command(CommandType.BUY, key, price = notEnoughMoney))
             }
         }
 
         for ((planKey, plan) in portfolios) {
             if (!currentPortfolio.containsKey(planKey) && planKey != "KRW") {
                 log.info("$planKey > add target")
-                tempBuyCommand.add(Command(CommandType.BUY, planKey, ((plan / 100.0) * currentSum)))
+                tempBuyCommand.add(Command(CommandType.BUY, planKey, price =  (plan * currentSum)))
             }
         }
 
-        return tempBuyCommand.maxByOrNull { it.price } ?: Command()
+        return tempBuyCommand.maxByOrNull { it.volume } ?: Command()
     }
 }
 
-data class Command(val commandType: CommandType = CommandType.NONE, val ticker: String = "", val price: Double = 0.0)
+data class Command(val commandType: CommandType = CommandType.NONE, val ticker: String = "", val volume: Double = 0.0, val price: Double = 0.0)
 
 enum class CommandType {
     SELL, BUY, NONE

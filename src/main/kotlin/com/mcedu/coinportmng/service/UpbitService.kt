@@ -11,6 +11,7 @@ import com.mcedu.coinportmng.dto.UpbitOrderResponse
 import com.mcedu.coinportmng.dto.UpbitWalletInfo
 import com.mcedu.coinportmng.repository.AccessInfoRepository
 import com.mcedu.coinportmng.scheduler.Command
+import com.mcedu.coinportmng.scheduler.CommandType
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.ParameterizedTypeReference
@@ -96,15 +97,35 @@ class UpbitService(
 
     @Transactional(readOnly = true)
     fun sell(infoSeq: Long, command: Command): UpbitOrderResponse? {
+        return orderResponse(infoSeq, command)
+    }
+
+    @Transactional(readOnly = true)
+    fun buy(infoSeq: Long, command: Command): UpbitOrderResponse? {
+        return orderResponse(infoSeq, command)
+    }
+
+    private fun orderResponse(
+        infoSeq: Long,
+        command: Command
+    ): UpbitOrderResponse? {
         val accessInfo = accessInfoRepository.findByIdOrNull(infoSeq) ?: throw RuntimeException("존재하지 않는 저장소 정보입니다.")
         val accessKey = accessInfo.accessKey
         val secretKey = accessInfo.secretKey
 
         val params = HashMap<String, String>()
         params["market"] = "KRW-${command.ticker}"
-        params["side"] = "ask"
-        params["volume"] = "${command.price}"
-        params["ord_type"] = "market"
+        if (command.commandType == CommandType.SELL) {
+            params["side"] = "ask"
+            params["volume"] = "${command.volume}"
+            params["ord_type"] = "market"
+        } else if(command.commandType == CommandType.BUY) {
+            params["side"] = "bid"
+            params["price"] = "${command.price}"
+            params["ord_type"] = "price"
+        }
+
+
 
         val queryElements = ArrayList<String>()
         for ((key, value) in params) {
@@ -125,7 +146,6 @@ class UpbitService(
             .withClaim("query_hash", queryHash)
             .withClaim("query_hash_alg", "SHA512")
             .sign(algorithm)
-
 
 
         val headers = HttpHeaders()
