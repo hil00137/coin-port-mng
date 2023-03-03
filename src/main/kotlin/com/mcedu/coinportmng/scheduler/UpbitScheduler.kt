@@ -12,11 +12,14 @@ import com.mcedu.coinportmng.common.IntervalConstant.YEARLY
 import com.mcedu.coinportmng.common.MainMarket.BTC_USDT
 import com.mcedu.coinportmng.common.MainMarket.KRW_BTC
 import com.mcedu.coinportmng.common.Market
+import com.mcedu.coinportmng.common.ReblanceJobStatus
 import com.mcedu.coinportmng.dto.UpbitWalletInfo
 import com.mcedu.coinportmng.entity.Coin
+import com.mcedu.coinportmng.entity.PortfolioRebalanceJob
 import com.mcedu.coinportmng.entity.RebalanceMng
 import com.mcedu.coinportmng.extention.getSecondsOfDay
 import com.mcedu.coinportmng.repository.CoinRepository
+import com.mcedu.coinportmng.repository.PortfolioRebalanceJobRepository
 import com.mcedu.coinportmng.repository.PortfolioRepository
 import com.mcedu.coinportmng.repository.RebalanceMngRepository
 import com.mcedu.coinportmng.service.UpbitService
@@ -33,7 +36,8 @@ class UpbitScheduler(
     private val upbitService: UpbitService,
     private val coinRepository: CoinRepository,
     private val portfolioRepository: PortfolioRepository,
-    private val rebalanceMngRepository: RebalanceMngRepository
+    private val rebalanceMngRepository: RebalanceMngRepository,
+    private val portfolioRebalanceJobRepository: PortfolioRebalanceJobRepository
 ) {
     private val log = LoggerFactory.getLogger(this::class.java)
 
@@ -73,11 +77,16 @@ class UpbitScheduler(
         val executeSet = mutableSetOf<RebalanceMng>()
         rebalanceMngs.forEach {
             if (intervalCheck(it, now) || (it.bandRebalance && bandCheck(it))) {
-                log.info("execute")
                 executeSet.add(it)
             }
         }
-        // TODO: exectueSet Check And Save
+        executeSet.forEach {
+            val rebalanceJob = portfolioRebalanceJobRepository.findByAccessInfo(it.accessInfo)
+            if (rebalanceJob == null) {
+                log.info("insert job")
+                portfolioRebalanceJobRepository.save(PortfolioRebalanceJob(accessInfo = it.accessInfo, status = ReblanceJobStatus.READY))
+            }
+        }
     }
 
     fun intervalCheck(rebalanceMng: RebalanceMng, now: LocalDateTime): Boolean {
