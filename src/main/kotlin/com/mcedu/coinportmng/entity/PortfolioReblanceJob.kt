@@ -1,6 +1,6 @@
 package com.mcedu.coinportmng.entity
 
-import com.mcedu.coinportmng.common.ReblanceJobStatus
+import com.mcedu.coinportmng.type.ReblanceJobStatus
 import jakarta.persistence.*
 import org.hibernate.annotations.DynamicInsert
 import org.hibernate.annotations.DynamicUpdate

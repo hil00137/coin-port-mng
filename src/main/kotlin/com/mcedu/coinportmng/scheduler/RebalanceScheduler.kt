@@ -1,6 +1,6 @@
 package com.mcedu.coinportmng.scheduler
 
-import com.mcedu.coinportmng.common.ReblanceJobStatus
+import com.mcedu.coinportmng.type.ReblanceJobStatus
 import com.mcedu.coinportmng.dto.Command
 import com.mcedu.coinportmng.dto.PortfolioJobDto
 import com.mcedu.coinportmng.repository.CoinRepository

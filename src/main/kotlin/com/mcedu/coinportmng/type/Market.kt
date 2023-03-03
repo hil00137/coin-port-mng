@@ -1,4 +1,4 @@
-package com.mcedu.coinportmng.common
+package com.mcedu.coinportmng.type
 
 enum class Market(val fee: Double) {
     KRW(0.0005),

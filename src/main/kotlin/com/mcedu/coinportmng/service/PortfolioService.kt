@@ -2,7 +2,7 @@ package com.mcedu.coinportmng.service
 
 import com.mcedu.coinportmng.common.Currency
 import com.mcedu.coinportmng.common.MainMarket
-import com.mcedu.coinportmng.common.Market
+import com.mcedu.coinportmng.type.Market
 import com.mcedu.coinportmng.dto.PortfolioDto
 import com.mcedu.coinportmng.dto.UpbitWalletInfo
 import com.mcedu.coinportmng.entity.Coin

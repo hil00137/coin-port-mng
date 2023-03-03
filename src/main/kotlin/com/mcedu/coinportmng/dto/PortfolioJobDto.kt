@@ -1,6 +1,6 @@
 package com.mcedu.coinportmng.dto
 
-import com.mcedu.coinportmng.common.ReblanceJobStatus
+import com.mcedu.coinportmng.type.ReblanceJobStatus
 
 data class PortfolioJobDto(
     var jobSeq: Long? = null,

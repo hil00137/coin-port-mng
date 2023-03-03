@@ -8,7 +8,7 @@ import com.mcedu.coinportmng.common.IntervalConstant.MONTHLY
 import com.mcedu.coinportmng.common.IntervalConstant.QUARTER_HOURLY
 import com.mcedu.coinportmng.common.IntervalConstant.TEN_MINUTELY
 import com.mcedu.coinportmng.common.IntervalConstant.YEARLY
-import com.mcedu.coinportmng.common.ReblanceJobStatus
+import com.mcedu.coinportmng.type.ReblanceJobStatus
 import com.mcedu.coinportmng.entity.Coin
 import com.mcedu.coinportmng.entity.PortfolioRebalanceJob
 import com.mcedu.coinportmng.entity.RebalanceMng

@@ -1,4 +1,4 @@
-package com.mcedu.coinportmng.common
+package com.mcedu.coinportmng.type
 
 enum class ReblanceJobStatus {
     READY, DOING,
