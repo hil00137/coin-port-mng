@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaRepository
 
 interface PortfolioRebalanceJobRepository: JpaRepository<PortfolioRebalanceJob, Long> {
     fun findByAccessInfo(accessInfo: AccessInfo) : PortfolioRebalanceJob?
+    fun findFirstByOrderBySeq(): PortfolioRebalanceJob?
 }

@@ -27,7 +27,7 @@ data class PortfolioRebalanceJob(
     @JoinColumn(name = "access_info_seq", referencedColumnName = "seq")
     val accessInfo: AccessInfo,
     @Enumerated(EnumType.STRING)
-    val status: ReblanceJobStatus,
+    var status: ReblanceJobStatus,
     @CreatedDate
     val createdDate: LocalDateTime = LocalDateTime.now()
 )
