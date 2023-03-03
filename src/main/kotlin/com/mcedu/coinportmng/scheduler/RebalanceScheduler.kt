@@ -23,15 +23,10 @@ class RebalanceScheduler(
 
     private val currentJob = PortfolioJobDto()
 
-    @Scheduled(fixedDelay = 10000)
+    @Scheduled(fixedDelay = 1000)
     @Transactional
     fun execute() {
-        log.info("execute")
-        val job = portfolioRebalanceJobRepository.findFirstByOrderBySeq()
-        log.info(job?.toString())
-        if (job == null) {
-            return
-        }
+        val job = portfolioRebalanceJobRepository.findFirstByOrderBySeq() ?: return
         if (job.status == ReblanceJobStatus.DOING) {
             if (currentJob.jobSeq == null) {
                 currentJob.jobStatus = ReblanceJobStatus.DOING
@@ -51,8 +46,8 @@ class RebalanceScheduler(
         // TODO : job status DOING
     }
 
-    @Scheduled(fixedDelay = 10000)
-    @Transactional(readOnly = true)
+    @Scheduled(fixedDelay = 1000)
+    @Transactional
     fun checkTarget() {
         val jobSeq = currentJob.jobSeq ?: return
         val infoSeq = currentJob.infoSeq ?: return
@@ -68,7 +63,10 @@ class RebalanceScheduler(
                         currentJob.jobStatus = ReblanceJobStatus.BUY
                         currentJob.command = command
                     }
-                    CommandType.NONE -> log.info("stop")
+                    CommandType.NONE -> {
+                        currentJob.reset()
+                        portfolioRebalanceJobRepository.deleteById(jobSeq)
+                    }
                 }
             }
             ReblanceJobStatus.SELL -> {
@@ -77,7 +75,19 @@ class RebalanceScheduler(
                 currentJob.jobStatus = ReblanceJobStatus.ORDER
             }
             ReblanceJobStatus.ORDER -> {
-                log.info("ORDER $currentJob")
+                log.info("ORDER")
+                val response = currentJob.response
+                if (response == null) {
+                    currentJob.reset()
+                    currentJob.jobStatus = ReblanceJobStatus.DOING
+                    return
+                }
+                val checkOrder = upbitService.checkOrder(infoSeq, response)
+                if (checkOrder?.state == "cancel") {
+                    currentJob.reset()
+                    currentJob.jobStatus = ReblanceJobStatus.DOING
+                }
+                log.info(checkOrder?.toString())
             }
             ReblanceJobStatus.BUY -> {
                 log.info("buy")
@@ -114,7 +124,7 @@ class RebalanceScheduler(
                 log.info("$key > is money skip")
                 continue
             }
-            if (pair.first < 7000) {
+            if (pair.first < 6000) {
                 log.info("$key > not enough money skip")
                 continue
             }
@@ -128,7 +138,7 @@ class RebalanceScheduler(
             if (plan < pair.second) {
                 val sellPercent = pair.second - plan
                 val overMoney = sellPercent * currentSum
-                if (overMoney < 7000) {
+                if (overMoney < 6000) {
                     log.info("$key > not enough money skip")
                     continue
                 }
@@ -138,7 +148,7 @@ class RebalanceScheduler(
 
             if (plan > pair.second) {
                 val notEnoughMoney = (plan - pair.second) * currentSum
-                if (notEnoughMoney < 7000) {
+                if (notEnoughMoney < 6000) {
                     log.info("$key > not enough money skip")
                     continue
                 }

@@ -125,8 +125,6 @@ class UpbitService(
             params["ord_type"] = "price"
         }
 
-
-
         val queryElements = ArrayList<String>()
         for ((key, value) in params) {
             queryElements.add("$key=$value")
@@ -153,6 +151,39 @@ class UpbitService(
         headers.setBearerAuth(jwtToken)
         val exchange = restTemplate.exchange(
             RequestEntity<String>(Gson().toJson(params), headers, HttpMethod.POST, URI("$apiUrl/v1/orders")),
+            UpbitOrderResponse::class.java
+        )
+        return exchange.body
+    }
+
+    @Transactional
+    fun checkOrder(infoSeq: Long, response: UpbitOrderResponse): UpbitOrderResponse? {
+        val accessInfo = accessInfoRepository.findByIdOrNull(infoSeq) ?: throw RuntimeException("존재하지 않는 저장소 정보입니다.")
+        val accessKey = accessInfo.accessKey
+        val secretKey = accessInfo.secretKey
+        val params = HashMap<String, String>()
+        params["uuid"] = response.uuid
+
+        val queryString = "uuid=${response.uuid}"
+
+        val md: MessageDigest = MessageDigest.getInstance("SHA-512")
+        md.update(queryString.toByteArray(charset("UTF-8")))
+
+        val queryHash = String.format("%0128x", BigInteger(1, md.digest()))
+
+        val algorithm = Algorithm.HMAC256(secretKey)
+        val jwtToken = JWT.create()
+            .withClaim("access_key", accessKey)
+            .withClaim("nonce", UUID.randomUUID().toString())
+            .withClaim("query_hash", queryHash)
+            .withClaim("query_hash_alg", "SHA512")
+            .sign(algorithm)
+
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        headers.setBearerAuth(jwtToken)
+        val exchange = restTemplate.exchange(
+            RequestEntity<String>(headers, HttpMethod.GET, URI("$apiUrl/v1/order?$queryString")),
             UpbitOrderResponse::class.java
         )
         return exchange.body
