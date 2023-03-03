@@ -1,11 +1,13 @@
 package com.mcedu.coinportmng.scheduler
 
 import com.mcedu.coinportmng.common.ReblanceJobStatus
+import com.mcedu.coinportmng.dto.Command
 import com.mcedu.coinportmng.dto.PortfolioJobDto
 import com.mcedu.coinportmng.repository.CoinRepository
 import com.mcedu.coinportmng.repository.PortfolioRebalanceJobRepository
 import com.mcedu.coinportmng.service.PortfolioService
 import com.mcedu.coinportmng.service.UpbitService
+import com.mcedu.coinportmng.type.CommandType
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -83,7 +85,7 @@ class RebalanceScheduler(
                     return
                 }
                 val checkOrder = upbitService.checkOrder(infoSeq, response)
-                if (checkOrder?.state == "cancel") {
+                if (checkOrder?.state == "cancel" || checkOrder?.state == "done") {
                     currentJob.reset()
                     currentJob.jobStatus = ReblanceJobStatus.DOING
                 }
@@ -165,10 +167,4 @@ class RebalanceScheduler(
 
         return tempBuyCommand.maxByOrNull { it.volume } ?: Command()
     }
-}
-
-data class Command(val commandType: CommandType = CommandType.NONE, val ticker: String = "", val volume: Double = 0.0, val price: Double = 0.0)
-
-enum class CommandType {
-    SELL, BUY, NONE
 }
