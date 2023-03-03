@@ -128,18 +128,7 @@ class UpbitService(
 
         val queryString = queryElements.joinToString("&")
 
-        val md: MessageDigest = MessageDigest.getInstance("SHA-512")
-        md.update(queryString.toByteArray(charset("UTF-8")))
-
-        val queryHash = String.format("%0128x", BigInteger(1, md.digest()))
-
-        val algorithm = Algorithm.HMAC256(secretKey)
-        val jwtToken = JWT.create()
-            .withClaim("access_key", accessKey)
-            .withClaim("nonce", UUID.randomUUID().toString())
-            .withClaim("query_hash", queryHash)
-            .withClaim("query_hash_alg", "SHA512")
-            .sign(algorithm)
+        val jwtToken = getJwtToken(queryString, secretKey, accessKey)
 
 
         val headers = HttpHeaders()
@@ -162,18 +151,7 @@ class UpbitService(
 
         val queryString = "uuid=${response.uuid}"
 
-        val md: MessageDigest = MessageDigest.getInstance("SHA-512")
-        md.update(queryString.toByteArray(charset("UTF-8")))
-
-        val queryHash = String.format("%0128x", BigInteger(1, md.digest()))
-
-        val algorithm = Algorithm.HMAC256(secretKey)
-        val jwtToken = JWT.create()
-            .withClaim("access_key", accessKey)
-            .withClaim("nonce", UUID.randomUUID().toString())
-            .withClaim("query_hash", queryHash)
-            .withClaim("query_hash_alg", "SHA512")
-            .sign(algorithm)
+        val jwtToken = getJwtToken(queryString, secretKey, accessKey)
 
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_JSON
@@ -183,5 +161,20 @@ class UpbitService(
             UpbitOrderResponse::class.java
         )
         return exchange.body
+    }
+
+    private fun getJwtToken(queryString: String, secretKey: String, accessKey: String): String {
+        val md: MessageDigest = MessageDigest.getInstance("SHA-512")
+        md.update(queryString.toByteArray(Charsets.UTF_8))
+
+        val queryHash = String.format("%0128x", BigInteger(1, md.digest()))
+
+        val algorithm = Algorithm.HMAC256(secretKey)
+        return JWT.create()
+            .withClaim("access_key", accessKey)
+            .withClaim("nonce", UUID.randomUUID().toString())
+            .withClaim("query_hash", queryHash)
+            .withClaim("query_hash_alg", "SHA512")
+            .sign(algorithm)
     }
 }
