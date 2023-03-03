@@ -27,6 +27,8 @@ dependencies {
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     implementation("com.auth0:java-jwt:4.3.0")
 
+    implementation("com.google.code.gson:gson:2.10.1")
+
     compileOnly("org.springframework.boot:spring-boot-devtools")
 }
 
