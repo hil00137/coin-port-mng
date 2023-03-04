@@ -1,13 +1,14 @@
 package com.mcedu.coinportmng.scheduler
 
-import com.mcedu.coinportmng.type.ReblanceJobStatus
 import com.mcedu.coinportmng.dto.Command
 import com.mcedu.coinportmng.dto.PortfolioJobDto
 import com.mcedu.coinportmng.repository.CoinRepository
 import com.mcedu.coinportmng.repository.PortfolioRebalanceJobRepository
 import com.mcedu.coinportmng.service.PortfolioService
+import com.mcedu.coinportmng.service.UpbitIndexService
 import com.mcedu.coinportmng.service.UpbitService
 import com.mcedu.coinportmng.type.CommandType
+import com.mcedu.coinportmng.type.ReblanceJobStatus
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -18,7 +19,8 @@ class RebalanceScheduler(
     private val portfolioRebalanceJobRepository: PortfolioRebalanceJobRepository,
     private val portfolioService: PortfolioService,
     private val coinRepository: CoinRepository,
-    private val upbitService: UpbitService
+    private val upbitService: UpbitService,
+    private val upbitIndexService: UpbitIndexService
 ) {
 
     private val log = LoggerFactory.getLogger(this::class.java)
@@ -116,9 +118,10 @@ class RebalanceScheduler(
         val planSum = portfolios.values.sum()
         portfolios = portfolios.mapValues { it.value / planSum }
 
-        val currentSum = currentPortfolio.values.sum()
-        val pairMap = currentPortfolio.mapValues { Pair(it.value, it.value / currentSum) }
+        val totalMoney = currentPortfolio.values.sum()
+        portfolios = upbitIndexService.changeIndexRatio(portfolios, totalMoney)
 
+        val pairMap = currentPortfolio.mapValues { Pair(it.value, it.value / totalMoney) }
         val tempBuyCommand = hashSetOf<Command>()
 
         for ((key, pair) in pairMap) {
@@ -139,7 +142,7 @@ class RebalanceScheduler(
 
             if (plan < pair.second) {
                 val sellPercent = pair.second - plan
-                val overMoney = sellPercent * currentSum
+                val overMoney = sellPercent * totalMoney
                 if (overMoney < 6000) {
                     log.info("$key > not enough money skip")
                     continue
@@ -149,7 +152,7 @@ class RebalanceScheduler(
             }
 
             if (plan > pair.second) {
-                val notEnoughMoney = (plan - pair.second) * currentSum
+                val notEnoughMoney = (plan - pair.second) * totalMoney
                 if (notEnoughMoney < 6000) {
                     log.info("$key > not enough money skip")
                     continue
@@ -161,7 +164,7 @@ class RebalanceScheduler(
         for ((planKey, plan) in portfolios) {
             if (!currentPortfolio.containsKey(planKey) && planKey != "KRW") {
                 log.info("$planKey > add target")
-                tempBuyCommand.add(Command(CommandType.BUY, planKey, price =  (plan * currentSum)))
+                tempBuyCommand.add(Command(CommandType.BUY, planKey, price =  (plan * totalMoney)))
             }
         }
 

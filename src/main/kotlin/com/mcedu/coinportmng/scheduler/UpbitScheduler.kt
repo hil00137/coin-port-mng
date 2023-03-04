@@ -1,6 +1,7 @@
 package com.mcedu.coinportmng.scheduler
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.mcedu.coinportmng.common.IntervalConstant.DAILY
 import com.mcedu.coinportmng.common.IntervalConstant.FIVE_MINUTELY
 import com.mcedu.coinportmng.common.IntervalConstant.HALF_HOURLY
@@ -9,7 +10,6 @@ import com.mcedu.coinportmng.common.IntervalConstant.MONTHLY
 import com.mcedu.coinportmng.common.IntervalConstant.QUARTER_HOURLY
 import com.mcedu.coinportmng.common.IntervalConstant.TEN_MINUTELY
 import com.mcedu.coinportmng.common.IntervalConstant.YEARLY
-import com.mcedu.coinportmng.type.ReblanceJobStatus
 import com.mcedu.coinportmng.entity.Coin
 import com.mcedu.coinportmng.entity.PortfolioRebalanceJob
 import com.mcedu.coinportmng.entity.RebalanceMng
@@ -17,7 +17,9 @@ import com.mcedu.coinportmng.entity.UpbitIndexInfo
 import com.mcedu.coinportmng.extention.getSecondsOfDay
 import com.mcedu.coinportmng.repository.*
 import com.mcedu.coinportmng.service.PortfolioService
+import com.mcedu.coinportmng.service.UpbitIndexService
 import com.mcedu.coinportmng.service.UpbitService
+import com.mcedu.coinportmng.type.ReblanceJobStatus
 import com.mcedu.coinportmng.type.UpbitIndex
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
@@ -34,10 +36,11 @@ class UpbitScheduler(
     private val portfolioService: PortfolioService,
     private val rebalanceMngRepository: RebalanceMngRepository,
     private val upbitIndexInfoRepository: UpbitIndexInfoRepository,
-    private val portfolioRebalanceJobRepository: PortfolioRebalanceJobRepository
+    private val portfolioRebalanceJobRepository: PortfolioRebalanceJobRepository,
+    private val upbitIndexService: UpbitIndexService
 ) {
     private val log = LoggerFactory.getLogger(this::class.java)
-    private val objectMapper = ObjectMapper()
+    private val objectMapper = ObjectMapper().registerKotlinModule()
 
     @Scheduled(cron = "0 0 * * * *")
     @Transactional
@@ -85,6 +88,7 @@ class UpbitScheduler(
     @Scheduled(cron = "0 * * * * *")
     @Transactional
     fun rebalnceTargetCheck() {
+        log.info("rebalace check")
         val now = LocalDateTime.now().withSecond(0)
         val rebalanceMngs = rebalanceMngRepository.findAllByActive()
         val executeSet = mutableSetOf<RebalanceMng>()
@@ -124,6 +128,10 @@ class UpbitScheduler(
         var portfolios = portfolioRepository.findAllByAccessInfo(rebalanceMng.accessInfo).associateBy { it.ticker }
             .mapValues { it.value.ratio }
         val currentPortfolio = portfolioService.getCurrentPortfolio(hasMarketWallet, coinMap)
+        val totalMoney = currentPortfolio.values.sum()
+        val planSum = portfolios.values.sum()
+        portfolios = portfolios.mapValues { it.value / planSum }.toMutableMap()
+        portfolios = upbitIndexService.changeIndexRatio(portfolios, totalMoney)
 
         for (planKey in portfolios.keys) {
             if (!currentPortfolio.containsKey(planKey)) {
@@ -131,12 +139,7 @@ class UpbitScheduler(
                 return true
             }
         }
-
-        val planSum = portfolios.values.sum()
-        portfolios = portfolios.mapValues { it.value / planSum }
-
-        val currentSum = currentPortfolio.values.sum()
-        val pairMap = currentPortfolio.mapValues { Pair(it.value, it.value / currentSum) }
+        val pairMap = currentPortfolio.mapValues { Pair(it.value, it.value / totalMoney) }
 
         for ((key, pair) in pairMap) {
             if (pair.first < 5000) {
