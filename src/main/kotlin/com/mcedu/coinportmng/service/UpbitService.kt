@@ -8,6 +8,7 @@ import com.google.gson.Gson
 import com.mcedu.coinportmng.dto.*
 import com.mcedu.coinportmng.repository.AccessInfoRepository
 import com.mcedu.coinportmng.type.CommandType
+import com.mcedu.coinportmng.type.UpbitIndex
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.ParameterizedTypeReference
@@ -33,6 +34,8 @@ class UpbitService(
 
     @Value("\${url.upbit}")
     private lateinit var apiUrl: String
+    @Value("\${url.ubci}")
+    private lateinit var ubciUrl: String
     private val restTemplate: RestTemplate = RestTemplate().also {
         it.messageConverters.add(MappingJackson2HttpMessageConverter().apply {
             this.objectMapper = ObjectMapper().apply {
@@ -176,5 +179,17 @@ class UpbitService(
             .withClaim("query_hash", queryHash)
             .withClaim("query_hash_alg", "SHA512")
             .sign(algorithm)
+    }
+
+    fun getIndexInfo(upbitIndex: UpbitIndex): List<IndexMarket> {
+        val headers = HttpHeaders()
+        headers.contentType = MediaType.APPLICATION_JSON
+        val uri =
+            UriComponentsBuilder.fromUriString("$ubciUrl/v1/crix/index/baskets").queryParam("code", upbitIndex.indexCode).build().toUri()
+        val exchange = restTemplate.exchange(
+            RequestEntity<String>(headers, HttpMethod.GET, uri),
+            IndexInfo::class.java
+        )
+        return exchange.body?.markets?: emptyList()
     }
 }

@@ -1,5 +1,6 @@
 package com.mcedu.coinportmng.scheduler
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.mcedu.coinportmng.common.IntervalConstant.DAILY
 import com.mcedu.coinportmng.common.IntervalConstant.FIVE_MINUTELY
 import com.mcedu.coinportmng.common.IntervalConstant.HALF_HOURLY
@@ -12,13 +13,12 @@ import com.mcedu.coinportmng.type.ReblanceJobStatus
 import com.mcedu.coinportmng.entity.Coin
 import com.mcedu.coinportmng.entity.PortfolioRebalanceJob
 import com.mcedu.coinportmng.entity.RebalanceMng
+import com.mcedu.coinportmng.entity.UpbitIndexInfo
 import com.mcedu.coinportmng.extention.getSecondsOfDay
-import com.mcedu.coinportmng.repository.CoinRepository
-import com.mcedu.coinportmng.repository.PortfolioRebalanceJobRepository
-import com.mcedu.coinportmng.repository.PortfolioRepository
-import com.mcedu.coinportmng.repository.RebalanceMngRepository
+import com.mcedu.coinportmng.repository.*
 import com.mcedu.coinportmng.service.PortfolioService
 import com.mcedu.coinportmng.service.UpbitService
+import com.mcedu.coinportmng.type.UpbitIndex
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -33,9 +33,11 @@ class UpbitScheduler(
     private val portfolioRepository: PortfolioRepository,
     private val portfolioService: PortfolioService,
     private val rebalanceMngRepository: RebalanceMngRepository,
+    private val upbitIndexInfoRepository: UpbitIndexInfoRepository,
     private val portfolioRebalanceJobRepository: PortfolioRebalanceJobRepository
 ) {
     private val log = LoggerFactory.getLogger(this::class.java)
+    private val objectMapper = ObjectMapper()
 
     @Scheduled(cron = "0 0 * * * *")
     @Transactional
@@ -62,6 +64,21 @@ class UpbitScheduler(
             log.info("신규 코인 등록 : ${newCoinList.map { it.koreanName }}")
         }
         coinRepository.saveAll(newCoinList)
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    @Transactional
+    fun updateIndexInfo() {
+        for (upbitIndex in UpbitIndex.values()) {
+            val indexMarkets = upbitService.getIndexInfo(upbitIndex).map { it.toSaveForm() }
+            val detail = objectMapper.writeValueAsString(indexMarkets)
+            var upbitIndexInfo = upbitIndexInfoRepository.findByName(upbitIndex)
+            if (upbitIndexInfo == null) {
+                upbitIndexInfo = UpbitIndexInfo(name = upbitIndex, detailJson = "")
+            }
+            upbitIndexInfo.detailJson = detail
+            upbitIndexInfoRepository.save(upbitIndexInfo)
+        }
     }
 
 
