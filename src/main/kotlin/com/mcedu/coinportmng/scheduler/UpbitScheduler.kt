@@ -1,5 +1,6 @@
 package com.mcedu.coinportmng.scheduler
 
+import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.mcedu.coinportmng.common.IntervalConstant.DAILY
@@ -10,13 +11,12 @@ import com.mcedu.coinportmng.common.IntervalConstant.MONTHLY
 import com.mcedu.coinportmng.common.IntervalConstant.QUARTER_HOURLY
 import com.mcedu.coinportmng.common.IntervalConstant.TEN_MINUTELY
 import com.mcedu.coinportmng.common.IntervalConstant.YEARLY
+import com.mcedu.coinportmng.dto.IndexMarket
 import com.mcedu.coinportmng.entity.Coin
 import com.mcedu.coinportmng.entity.PortfolioRebalanceJob
 import com.mcedu.coinportmng.entity.RebalanceMng
 import com.mcedu.coinportmng.entity.UpbitIndexInfo
-import com.mcedu.coinportmng.extention.getSecondsOfDay
-import com.mcedu.coinportmng.extention.logForm
-import com.mcedu.coinportmng.extention.toPercent
+import com.mcedu.coinportmng.extention.*
 import com.mcedu.coinportmng.repository.*
 import com.mcedu.coinportmng.service.PortfolioService
 import com.mcedu.coinportmng.service.UpbitIndexService
@@ -80,6 +80,19 @@ class UpbitScheduler(
             var upbitIndexInfo = upbitIndexInfoRepository.findByName(upbitIndex)
             if (upbitIndexInfo == null) {
                 upbitIndexInfo = UpbitIndexInfo(name = upbitIndex, detailJson = "")
+            } else {
+                val orgIndexMarkets = objectMapper.readValue(upbitIndexInfo.detailJson, object : TypeReference<List<IndexMarket>>() {})
+                val checkChange = orgIndexMarkets.checkChange(indexMarkets).map {
+                    "${it.first}: ${it.second.addSign()}%"
+                }
+                if (checkChange.isNotEmpty()) {
+                    log.info("\n" +
+                            "-------------------------------------------------------\n" +
+                            "| ${upbitIndex.desc} 변경\n" +
+                            "| ${checkChange.joinToString("\n| ")}\n" +
+                            "-------------------------------------------------------"
+                    )
+                }
             }
             upbitIndexInfo.detailJson = detail
             upbitIndexInfoRepository.save(upbitIndexInfo)
@@ -90,7 +103,6 @@ class UpbitScheduler(
     @Scheduled(cron = "0 * * * * *")
     @Transactional
     fun rebalnceTargetCheck() {
-        log.info("rebalace check")
         val now = LocalDateTime.now().withSecond(0)
         val rebalanceMngs = rebalanceMngRepository.findAllByActive()
         val executeSet = mutableSetOf<RebalanceMng>()
@@ -141,10 +153,10 @@ class UpbitScheduler(
 
         log.info("\n" +
                 "-------------------------------------------------------------------------------------\n" +
-                "|포트폴리오 체크\n" +
-                "|계    획 : ${orgPortPercent.logForm()}\n" +
-                "|수정 계획 : ${planPortPercentage.logForm()}\n" +
-                "|현    재 : ${currentPortPercentage.logForm()}\n" +
+                "| ${rebalanceMng.accessInfo.name} 포트폴리오 체크\n" +
+                "| 계    획 : ${orgPortPercent.logForm()}\n" +
+                "| 수정 계획 : ${planPortPercentage.logForm()}\n" +
+                "| 현    재 : ${currentPortPercentage.logForm()}\n" +
                 "--------------------------------------------------------------------------------------"
         )
 

@@ -14,3 +14,11 @@ fun Double.toPercent(underDigit : Int = 0): Double {
     }
     return result
 }
+
+fun Double.addSign(): String {
+    return if (this > 0) {
+        "+$this"
+    } else {
+        "$this"
+    }
+}
