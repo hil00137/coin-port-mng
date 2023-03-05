@@ -2,7 +2,6 @@ package com.mcedu.coinportmng.scheduler
 
 import com.mcedu.coinportmng.dto.Command
 import com.mcedu.coinportmng.dto.PortfolioJobDto
-import com.mcedu.coinportmng.repository.CoinRepository
 import com.mcedu.coinportmng.repository.PortfolioRebalanceJobRepository
 import com.mcedu.coinportmng.service.PortfolioService
 import com.mcedu.coinportmng.service.UpbitIndexService
@@ -18,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional
 class RebalanceScheduler(
     private val portfolioRebalanceJobRepository: PortfolioRebalanceJobRepository,
     private val portfolioService: PortfolioService,
-    private val coinRepository: CoinRepository,
     private val upbitService: UpbitService,
     private val upbitIndexService: UpbitIndexService
 ) {
@@ -108,20 +106,15 @@ class RebalanceScheduler(
     }
 
     private fun portfolioCheck(): Command {
-        val accounts = upbitService.getMyAccounts(currentJob.infoSeq ?: 0)
-        val currencyStrs = accounts.map { it.currency }
-        val coinMap = coinRepository.findAllById(currencyStrs).associateBy { it.ticker }
-        val hasMarketWallet = accounts.filter { coinMap.containsKey(it.currency) || it.currency == "KRW" }
-        val walletInfoMap = hasMarketWallet.associateBy { it.currency }
         var portfolios = currentJob.portfolios.mapValues { it.value.ratio }
-        val currentPortfolio = portfolioService.getCurrentPortfolio(hasMarketWallet, coinMap)
+        val currentPortfolio = portfolioService.getCurrentPortfolio(currentJob.infoSeq ?: 0)
         val planSum = portfolios.values.sum()
         portfolios = portfolios.mapValues { it.value / planSum }
 
-        val totalMoney = currentPortfolio.values.sum()
+        val totalMoney = currentPortfolio.values.sumOf { it.price }
         portfolios = upbitIndexService.changeIndexRatio(portfolios, totalMoney)
 
-        val pairMap = currentPortfolio.mapValues { Pair(it.value, it.value / totalMoney) }
+        val pairMap = currentPortfolio.mapValues { Pair(it.value.price, it.value.price / totalMoney) }
         val tempBuyCommand = hashSetOf<Command>()
 
         for ((key, pair) in pairMap) {
@@ -134,7 +127,7 @@ class RebalanceScheduler(
                 continue
             }
             val plan = portfolios[key]
-            val balance = walletInfoMap[key]?.balance ?: 0.0
+            val balance = currentPortfolio[key]?.balance ?: 0.0
             if (plan == null) {
                 log.info("$key > sell target")
                 return Command(CommandType.SELL, key, volume = balance)

@@ -135,20 +135,16 @@ class UpbitScheduler(
     }
 
     private fun bandCheck(rebalanceMng: RebalanceMng): Boolean {
-        val accounts = upbitService.getMyAccounts(rebalanceMng.accessInfo.seq ?: 0)
-        val currencyStrs = accounts.map { it.currency }
-        val coinMap = coinRepository.findAllById(currencyStrs).associateBy { it.ticker }
-        val hasMarketWallet = accounts.filter { coinMap.containsKey(it.currency) || it.currency == "KRW" }
         val orgPortfolios = portfolioRepository.findAllByAccessInfo(rebalanceMng.accessInfo).associateBy { it.ticker }
             .mapValues { it.value.ratio }
-        val currentPortfolio = portfolioService.getCurrentPortfolio(hasMarketWallet, coinMap)
-        val totalMoney = currentPortfolio.values.sum()
+        val currentPortfolio = portfolioService.getCurrentPortfolio(rebalanceMng.accessInfo.seq ?: 0)
+        val totalMoney = currentPortfolio.values.sumOf { it.price }
         val planSum = orgPortfolios.values.sum()
         var portfolios= orgPortfolios.mapValues { it.value / planSum }
         portfolios = upbitIndexService.changeIndexRatio(portfolios, totalMoney)
 
         val orgPortPercent = orgPortfolios.mapValues { "${it.value}%" }
-        val currentPortPercentage = currentPortfolio.mapValues { "${(it.value / totalMoney).toPercent(2)}%" }
+        val currentPortPercentage = currentPortfolio.mapValues { "${(it.value.price / totalMoney).toPercent(2)}%" }
         val planPortPercentage = portfolios.mapValues { "${it.value.toPercent(2)}%" }
         val hyphenSize = planPortPercentage.size
         val hyphen = "--------------"
@@ -169,7 +165,7 @@ class UpbitScheduler(
                 return true
             }
         }
-        val pairMap = currentPortfolio.mapValues { Pair(it.value, it.value / totalMoney) }
+        val pairMap = currentPortfolio.mapValues { Pair(it.value.price, it.value.price / totalMoney) }
 
         for ((key, pair) in pairMap) {
             if (pair.first < 5000) {

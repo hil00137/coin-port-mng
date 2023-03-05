@@ -2,12 +2,12 @@ package com.mcedu.coinportmng.service
 
 import com.mcedu.coinportmng.common.Currency
 import com.mcedu.coinportmng.common.MainMarket
+import com.mcedu.coinportmng.dto.CoinPrice
 import com.mcedu.coinportmng.type.Market
 import com.mcedu.coinportmng.dto.PortfolioDto
-import com.mcedu.coinportmng.dto.UpbitWalletInfo
-import com.mcedu.coinportmng.entity.Coin
 import com.mcedu.coinportmng.entity.Portfolio
 import com.mcedu.coinportmng.repository.AccessInfoRepository
+import com.mcedu.coinportmng.repository.CoinRepository
 import com.mcedu.coinportmng.repository.PortfolioRepository
 import com.mcedu.coinportmng.type.IsYN
 import org.springframework.stereotype.Service
@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 
 @Service
 class PortfolioService(
+    private val coinRepository: CoinRepository,
     private val accessInfoRepository: AccessInfoRepository,
     private val portfolioRepository: PortfolioRepository,
     private val upbitService: UpbitService
@@ -56,11 +57,11 @@ class PortfolioService(
         }
     }
 
-    fun getCurrentPortfolio(
-        hasMarketWallet: List<UpbitWalletInfo>,
-        coinMap: Map<String, Coin>
-    ): MutableMap<String, Double> {
-
+    fun getCurrentPortfolio(accessInfoSeq: Long): MutableMap<String, CoinPrice> {
+        val accounts = upbitService.getMyAccounts(accessInfoSeq)
+        val currencyStrs = accounts.map { it.currency }
+        val coinMap = coinRepository.findAllById(currencyStrs).associateBy { it.ticker }
+        val hasMarketWallet = accounts.filter { coinMap.containsKey(it.currency) || it.currency == "KRW" }
         val setOfMarket = hashSetOf<String>()
         for ((ticker, coin) in coinMap) {
             if (coin.krwMarket == IsYN.Y) {
@@ -76,13 +77,13 @@ class PortfolioService(
         }
         val priceDtoMap = upbitService.getCurrentPrice(setOfMarket).associateBy { it.market }
 
-        val currentPortfolio = mutableMapOf<String, Double>()
+        val currentPortfolio = mutableMapOf<String, CoinPrice>()
         val krwBtcPrice = priceDtoMap[MainMarket.KRW_BTC]?.tradePrice ?: 0.0
         val btcUsdtPrice = priceDtoMap[MainMarket.BTC_USDT]?.tradePrice ?: 0.0
         for (walletInfo in hasMarketWallet) {
             val ticker = walletInfo.currency
             if (ticker == Currency.KRW) {
-                currentPortfolio[Currency.KRW] = walletInfo.balance
+                currentPortfolio[Currency.KRW] = CoinPrice(price = walletInfo.balance, balance = walletInfo.balance)
                 continue
             }
             val coin = coinMap[ticker] ?: continue
@@ -100,7 +101,7 @@ class PortfolioService(
                 val btcBalance = Market.BTC.changeMoney(usdtBalance * btcUsdtPrice)
                 money = Market.KRW.changeMoney(btcBalance * krwBtcPrice)
             }
-            currentPortfolio[ticker] = money
+            currentPortfolio[ticker] = CoinPrice(balance = walletInfo.balance, price = money)
         }
         return currentPortfolio
     }
