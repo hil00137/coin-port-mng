@@ -27,7 +27,13 @@ class UpbitIndexService(
                 var upbitIndexInfo = objectMapper.readValue(
                     upbitIndexInfoRepository.findByName(upbitIndex)?.detailJson,
                     object : TypeReference<List<IndexMarket>>() {})
-                    .filter { it.componentRatio * idxMoney > 10000 }.associate {
+                    .filter {
+                        if (portfolios.containsKey(it.code)) {
+                            it.componentRatio * idxMoney > 7000
+                        } else {
+                            it.componentRatio * idxMoney > 10000
+                        }
+                    }.associate {
                         Pair(it.code, it.componentRatio)
                     }
 
