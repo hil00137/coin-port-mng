@@ -29,23 +29,19 @@ class RebalanceScheduler(
     @Transactional
     fun execute() {
         val job = portfolioRebalanceJobRepository.findFirstByOrderBySeq() ?: return
-        if (job.status == ReblanceJobStatus.DOING) {
-            if (currentJob.jobSeq == null) {
-                currentJob.jobStatus = ReblanceJobStatus.DOING
-                currentJob.jobSeq = job.seq
-                currentJob.infoSeq = job.accessInfo.seq
-                val portfolios = portfolioService.getPortfolios(job.accessInfo.seq ?: 0).associateBy { it.ticker }
-                currentJob.portfolios = portfolios
-            }
-            return
-        }
-        val portfolios = portfolioService.getPortfolios(job.accessInfo.seq ?: 0).associateBy { it.ticker }
-        currentJob.jobStatus = ReblanceJobStatus.DOING
-        currentJob.portfolios = portfolios
         currentJob.jobSeq = job.seq
         currentJob.infoSeq = job.accessInfo.seq
+        val accessInfoSeq = job.accessInfo.seq ?: 0
+        if (currentJob.portfolios.isEmpty()) {
+            currentJob.jobStatus = ReblanceJobStatus.DOING
+            val portfolios = portfolioService.getPortfolios(accessInfoSeq).associateBy { it.ticker }
+            currentJob.portfolios = portfolios
+        }
+        if (job.status == ReblanceJobStatus.DOING) {
+            return
+        }
+        currentJob.jobStatus = ReblanceJobStatus.DOING
         job.status = ReblanceJobStatus.DOING
-        // TODO : job status DOING
     }
 
     @Scheduled(fixedDelay = 1000)
