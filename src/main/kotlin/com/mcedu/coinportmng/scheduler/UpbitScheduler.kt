@@ -86,11 +86,12 @@ class UpbitScheduler(
                     "${it.first}: ${it.second.addSign()}%"
                 }
                 if (checkChange.isNotEmpty()) {
+                    val hyphen = "---------------" * checkChange.size
                     log.info("\n" +
-                            "-------------------------------------------------------\n" +
+                            "$hyphen\n" +
                             "| ${upbitIndex.desc} 변경\n" +
-                            "| ${checkChange.joinToString("\n| ")}\n" +
-                            "-------------------------------------------------------"
+                            "| ${checkChange.joinToString(" | ")}\n" +
+                            hyphen
                     )
                 }
             }
