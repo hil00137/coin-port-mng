@@ -1,9 +1,11 @@
 package com.mcedu.coinportmng.scheduler
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.mcedu.coinportmng.entity.DaySnapshot
 import com.mcedu.coinportmng.entity.HourSnapshot
 import com.mcedu.coinportmng.entity.MinuteSnapshot
 import com.mcedu.coinportmng.repository.AccessInfoRepository
+import com.mcedu.coinportmng.repository.DaySnapshotRepository
 import com.mcedu.coinportmng.repository.HourSnapshotRepository
 import com.mcedu.coinportmng.repository.MinuteSnapshotRepository
 import com.mcedu.coinportmng.service.PortfolioService
@@ -12,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.math.roundToLong
 
 @Service
@@ -19,11 +22,13 @@ class SnapshotScheduler(
     private val accessInfoRepository: AccessInfoRepository,
     private val portfolioService: PortfolioService,
     private val minuteSnapshotRepository: MinuteSnapshotRepository,
-    private val hourSnapshotRepository: HourSnapshotRepository
+    private val hourSnapshotRepository: HourSnapshotRepository,
+    private val daySnapshotRepository: DaySnapshotRepository
 ) {
     private val log = LoggerFactory.getLogger(this::class.java)
-
     private val objectMapper = ObjectMapper()
+    private val pattern = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+
 
     @Scheduled(cron = "0 * * * * *")
     @Transactional
@@ -41,13 +46,27 @@ class SnapshotScheduler(
             snapshot = prices,
             totalMoney = totalMoney.roundToLong()
         )
+
+        log.info("SAVE ${now.format(pattern)} snapshot")
         minuteSnapshotRepository.save(minuteSnapshot)
-        minuteSnapshotRepository.deleteAllByAccessInfoAndTimeBefore(accessInfo, now.minusDays(1))
+        if (minuteSnapshotRepository.deleteAllByAccessInfoAndTimeBefore(accessInfo, now.minusDays(1)) > 0) {
+            log.info("DELETE ${now.minusDays(1)} minute snapshot")
+        }
 
         if (now.minute != 0) {
             return
         }
         hourSnapshotRepository.save(HourSnapshot(minuteSnapshot))
-        hourSnapshotRepository.deleteAllByAccessInfoAndTimeBefore(accessInfo, now.minusMonths(1))
+        if (hourSnapshotRepository.deleteAllByAccessInfoAndTimeBefore(accessInfo, now.minusMonths(1)) > 0) {
+            log.info("DELETE ${now.minusMonths(1)} hour snapshot")
+        }
+
+        if (now.hour != 9) {
+            return
+        }
+        daySnapshotRepository.save(DaySnapshot(minuteSnapshot))
+        if (daySnapshotRepository.deleteAllByAccessInfoAndTimeBefore(accessInfo, now.minusYears(1)) > 0) {
+            log.info("DELETE ${now.minusYears(1)} day snapshot")
+        }
     }
 }

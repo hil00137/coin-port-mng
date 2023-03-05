@@ -8,4 +8,5 @@ object Sequence {
     const val INDEX_INfO = "index_info_seq"
     const val MINUTE_SNAPSHOT = "minute_snapshot_seq"
     const val HOUR_SNAPSHOT = "hour_snapshot_seq"
+    const val DAY_SNAPSHOT = "day_snapshot_seq"
 }
