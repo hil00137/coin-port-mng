@@ -150,14 +150,15 @@ class UpbitScheduler(
         val orgPortPercent = orgPortfolios.mapValues { "${it.value}%" }
         val currentPortPercentage = currentPortfolio.mapValues { "${(it.value / totalMoney).toPercent(2)}%" }
         val planPortPercentage = portfolios.mapValues { "${it.value.toPercent(2)}%" }
-
+        val hyphenSize = planPortPercentage.size
+        val hyphen = "--------------"
         log.info("\n" +
-                "-------------------------------------------------------------------------------------\n" +
+                "${hyphen * hyphenSize}\n" +
                 "| ${rebalanceMng.accessInfo.name} 포트폴리오 체크\n" +
                 "| 계    획 : ${orgPortPercent.logForm()}\n" +
                 "| 수정 계획 : ${planPortPercentage.logForm()}\n" +
                 "| 현    재 : ${currentPortPercentage.logForm()}\n" +
-                "--------------------------------------------------------------------------------------"
+                (hyphen * hyphenSize)
         )
 
         for (planKey in portfolios.keys) {
