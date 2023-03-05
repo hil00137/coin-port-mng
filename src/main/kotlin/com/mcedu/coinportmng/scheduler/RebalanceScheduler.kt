@@ -49,6 +49,7 @@ class RebalanceScheduler(
     fun checkTarget() {
         val jobSeq = currentJob.jobSeq ?: return
         val infoSeq = currentJob.infoSeq ?: return
+        val currentJobCommand = currentJob.command
         when (currentJob.jobStatus) {
             ReblanceJobStatus.DOING -> {
                 val command = portfolioCheck()
@@ -68,12 +69,12 @@ class RebalanceScheduler(
                 }
             }
             ReblanceJobStatus.SELL -> {
-                log.info("sell")
-                currentJob.response = upbitService.sell(infoSeq, currentJob.command)
+                log.info("Sell > ${currentJobCommand.ticker}")
+                currentJob.response = upbitService.sell(infoSeq, currentJobCommand)
                 currentJob.jobStatus = ReblanceJobStatus.ORDER
             }
             ReblanceJobStatus.ORDER -> {
-                log.info("ORDER")
+                log.info("Order wait > ${currentJobCommand.ticker}")
                 val response = currentJob.response
                 if (response == null) {
                     currentJob.reset()
@@ -88,8 +89,8 @@ class RebalanceScheduler(
                 log.info(checkOrder?.toString())
             }
             ReblanceJobStatus.BUY -> {
-                log.info("buy")
-                currentJob.response = upbitService.buy(infoSeq, currentJob.command)
+                log.info("Buy > ${currentJobCommand.ticker}")
+                currentJob.response = upbitService.buy(infoSeq, currentJobCommand)
                 currentJob.jobStatus = ReblanceJobStatus.ORDER
             }
             ReblanceJobStatus.RECOVERY -> {
