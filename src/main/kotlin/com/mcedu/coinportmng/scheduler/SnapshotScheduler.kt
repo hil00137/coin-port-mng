@@ -1,8 +1,10 @@
 package com.mcedu.coinportmng.scheduler
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.mcedu.coinportmng.entity.HourSnapshot
 import com.mcedu.coinportmng.entity.MinuteSnapshot
 import com.mcedu.coinportmng.repository.AccessInfoRepository
+import com.mcedu.coinportmng.repository.HourSnapshotRepository
 import com.mcedu.coinportmng.repository.MinuteSnapshotRepository
 import com.mcedu.coinportmng.service.PortfolioService
 import org.slf4j.LoggerFactory
@@ -16,7 +18,8 @@ import kotlin.math.roundToLong
 class SnapshotScheduler(
     private val accessInfoRepository: AccessInfoRepository,
     private val portfolioService: PortfolioService,
-    private val minuteSnapshotRepository: MinuteSnapshotRepository
+    private val minuteSnapshotRepository: MinuteSnapshotRepository,
+    private val hourSnapshotRepository: HourSnapshotRepository
 ) {
     private val log = LoggerFactory.getLogger(this::class.java)
 
@@ -32,7 +35,19 @@ class SnapshotScheduler(
         val prices = objectMapper.writeValueAsString(priceMap)
         val totalMoney = priceMap.values.sumOf { it.price }
 
-        minuteSnapshotRepository.save(MinuteSnapshot(accessInfo = accessInfo, time = now, snapshot = prices, totalMoney = totalMoney.roundToLong()))
+        val minuteSnapshot = MinuteSnapshot(
+            accessInfo = accessInfo,
+            time = now,
+            snapshot = prices,
+            totalMoney = totalMoney.roundToLong()
+        )
+        minuteSnapshotRepository.save(minuteSnapshot)
         minuteSnapshotRepository.deleteAllByAccessInfoAndTimeBefore(accessInfo, now.minusDays(1))
+
+        if (now.minute != 0) {
+            return
+        }
+        hourSnapshotRepository.save(HourSnapshot(minuteSnapshot))
+        hourSnapshotRepository.deleteAllByAccessInfoAndTimeBefore(accessInfo, now.minusMonths(1))
     }
 }
