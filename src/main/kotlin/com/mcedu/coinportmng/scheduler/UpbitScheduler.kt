@@ -15,6 +15,8 @@ import com.mcedu.coinportmng.entity.PortfolioRebalanceJob
 import com.mcedu.coinportmng.entity.RebalanceMng
 import com.mcedu.coinportmng.entity.UpbitIndexInfo
 import com.mcedu.coinportmng.extention.getSecondsOfDay
+import com.mcedu.coinportmng.extention.logForm
+import com.mcedu.coinportmng.extention.toPercent
 import com.mcedu.coinportmng.repository.*
 import com.mcedu.coinportmng.service.PortfolioService
 import com.mcedu.coinportmng.service.UpbitIndexService
@@ -125,13 +127,26 @@ class UpbitScheduler(
         val currencyStrs = accounts.map { it.currency }
         val coinMap = coinRepository.findAllById(currencyStrs).associateBy { it.ticker }
         val hasMarketWallet = accounts.filter { coinMap.containsKey(it.currency) || it.currency == "KRW" }
-        var portfolios = portfolioRepository.findAllByAccessInfo(rebalanceMng.accessInfo).associateBy { it.ticker }
+        val orgPortfolios = portfolioRepository.findAllByAccessInfo(rebalanceMng.accessInfo).associateBy { it.ticker }
             .mapValues { it.value.ratio }
         val currentPortfolio = portfolioService.getCurrentPortfolio(hasMarketWallet, coinMap)
         val totalMoney = currentPortfolio.values.sum()
-        val planSum = portfolios.values.sum()
-        portfolios = portfolios.mapValues { it.value / planSum }.toMutableMap()
+        val planSum = orgPortfolios.values.sum()
+        var portfolios= orgPortfolios.mapValues { it.value / planSum }
         portfolios = upbitIndexService.changeIndexRatio(portfolios, totalMoney)
+
+        val orgPortPercent = orgPortfolios.mapValues { "${it.value}%" }
+        val currentPortPercentage = currentPortfolio.mapValues { "${(it.value / totalMoney).toPercent(2)}%" }
+        val planPortPercentage = portfolios.mapValues { "${it.value.toPercent(2)}%" }
+
+        log.info("\n" +
+                "-------------------------------------------------------------------------------------\n" +
+                "|포트폴리오 체크\n" +
+                "|계    획 : ${orgPortPercent.logForm()}\n" +
+                "|수정 계획 : ${planPortPercentage.logForm()}\n" +
+                "|현    재 : ${currentPortPercentage.logForm()}\n" +
+                "--------------------------------------------------------------------------------------"
+        )
 
         for (planKey in portfolios.keys) {
             if (!currentPortfolio.containsKey(planKey)) {
