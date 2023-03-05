@@ -1,5 +1,7 @@
 package com.mcedu.coinportmng.extention
 
+import java.text.NumberFormat
+import java.util.*
 import kotlin.math.roundToLong
 
 fun Double.toPercent(underDigit : Int = 0): Double {
@@ -21,4 +23,8 @@ fun Double.addSign(): String {
     } else {
         "$this"
     }
+}
+
+fun Double.toCurrency(): String {
+    return NumberFormat.getCurrencyInstance(Locale.KOREA).format(this.roundToLong())
 }
