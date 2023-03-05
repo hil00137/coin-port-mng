@@ -161,6 +161,6 @@ class RebalanceScheduler(
             }
         }
 
-        return tempBuyCommand.maxByOrNull { it.volume } ?: Command()
+        return tempBuyCommand.maxByOrNull { it.price } ?: Command()
     }
 }
