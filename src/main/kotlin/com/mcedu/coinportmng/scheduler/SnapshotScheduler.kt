@@ -50,7 +50,7 @@ class SnapshotScheduler(
         log.info("SAVE ${now.format(pattern)} snapshot")
         minuteSnapshotRepository.save(minuteSnapshot)
         if (minuteSnapshotRepository.deleteAllByAccessInfoAndTimeBefore(accessInfo, now.minusDays(1)) > 0) {
-            log.info("DELETE ${now.minusDays(1)} minute snapshot")
+            log.info("DELETE ${now.minusDays(1).format(pattern)} minute snapshot")
         }
 
         if (now.minute != 0) {
@@ -58,7 +58,7 @@ class SnapshotScheduler(
         }
         hourSnapshotRepository.save(HourSnapshot(minuteSnapshot))
         if (hourSnapshotRepository.deleteAllByAccessInfoAndTimeBefore(accessInfo, now.minusMonths(1)) > 0) {
-            log.info("DELETE ${now.minusMonths(1)} hour snapshot")
+            log.info("DELETE ${now.minusMonths(1).format(pattern)} hour snapshot")
         }
 
         if (now.hour != 9) {
@@ -66,7 +66,7 @@ class SnapshotScheduler(
         }
         daySnapshotRepository.save(DaySnapshot(minuteSnapshot))
         if (daySnapshotRepository.deleteAllByAccessInfoAndTimeBefore(accessInfo, now.minusYears(1)) > 0) {
-            log.info("DELETE ${now.minusYears(1)} day snapshot")
+            log.info("DELETE ${now.minusYears(1).format(pattern)} day snapshot")
         }
     }
 }
