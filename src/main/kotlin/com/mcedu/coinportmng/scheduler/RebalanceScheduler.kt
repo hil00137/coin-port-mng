@@ -7,11 +7,13 @@ import com.mcedu.coinportmng.service.PortfolioService
 import com.mcedu.coinportmng.service.UpbitIndexService
 import com.mcedu.coinportmng.service.UpbitService
 import com.mcedu.coinportmng.type.CommandType
+import com.mcedu.coinportmng.type.Market
 import com.mcedu.coinportmng.type.ReblanceJobStatus
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import kotlin.math.abs
 
 @Component
 class RebalanceScheduler(
@@ -69,7 +71,6 @@ class RebalanceScheduler(
                 }
             }
             ReblanceJobStatus.SELL -> {
-                log.info("Sell > ${currentJobCommand.ticker}")
                 currentJob.response = upbitService.sell(infoSeq, currentJobCommand)
                 currentJob.jobStatus = ReblanceJobStatus.ORDER
             }
@@ -89,7 +90,6 @@ class RebalanceScheduler(
                 log.info(checkOrder?.toString())
             }
             ReblanceJobStatus.BUY -> {
-                log.info("Buy > ${currentJobCommand.ticker}")
                 currentJob.response = upbitService.buy(infoSeq, currentJobCommand)
                 currentJob.jobStatus = ReblanceJobStatus.ORDER
             }
@@ -113,51 +113,72 @@ class RebalanceScheduler(
 
         val pairMap = currentPortfolio.mapValues { Pair(it.value.price, it.value.price / totalMoney) }
         val tempBuyCommand = hashSetOf<Command>()
-
+        val tempSellCommands = hashSetOf<Command>()
+        val rebalanceCommands = hashSetOf<Command>()
         for ((key, pair) in pairMap) {
             if (key == "KRW") {
-                log.info("$key > is money skip")
-                continue
-            }
-            if (pair.first < 6000) {
-                log.info("$key > not enough money skip")
                 continue
             }
             val plan = portfolios[key]
             val balance = currentPortfolio[key]?.balance ?: 0.0
             if (plan == null) {
-                log.info("$key > sell target")
-                return Command(CommandType.SELL, key, volume = balance)
+                log.info("$key - 포트폴리오 대상 아님 판매")
+                if (pair.first < Market.KRW.getExtraBalance()) {
+                    rebalanceCommands.add(Command.forRebalance(key))
+                } else {
+                    tempSellCommands.add(Command(CommandType.SELL, key, volume = balance, price = pair.first))
+                }
+                break
             }
 
-            if (plan < pair.second) {
-                val sellPercent = pair.second - plan
-                val overMoney = sellPercent * totalMoney
-                if (overMoney < 6000) {
-                    log.info("$key > not enough money skip")
-                    continue
-                }
+            val diff = abs(pair.second - plan)
+            if (diff * 100 < 0.1) {
+                continue
+            }
 
-                return Command(CommandType.SELL, key, volume = (balance * sellPercent))
+
+            if (plan < pair.second) {
+                val overMoney = diff * totalMoney
+                if (overMoney >= Market.KRW.getExtraBalance()) {
+                    val volume = balance * ((overMoney) / (currentPortfolio[key]?.price ?: 0.0))
+                    tempSellCommands.add(Command(CommandType.SELL, key, volume = volume, price = overMoney))
+                } else {
+                    rebalanceCommands.add(Command.forRebalance(key))
+                }
+                continue
             }
 
             if (plan > pair.second) {
-                val notEnoughMoney = (plan - pair.second) * totalMoney
-                if (notEnoughMoney < 6000) {
-                    log.info("$key > not enough money skip")
-                    continue
+                val notEnoughMoney = diff * totalMoney
+                if (notEnoughMoney >= Market.KRW.getExtraBalance()) {
+                    tempBuyCommand.add(Command.buy(key, price = notEnoughMoney))
+                } else {
+                    rebalanceCommands.add(Command.forRebalance(key))
                 }
-                tempBuyCommand.add(Command(CommandType.BUY, key, price = notEnoughMoney))
             }
+        }
+
+        if (tempSellCommands.isNotEmpty()) {
+            val command = tempSellCommands.maxBy { it.price }
+            log.info("${command.ticker} - ${command.volume}${command.ticker} 시장가 매도")
+            return command
+        }
+
+        if (rebalanceCommands.isNotEmpty()) {
+            val command = rebalanceCommands.first()
+            log.info("${command.ticker} - 대상 제거를 위한 추가 ${command.price}원 시장가 매수")
+            return command
         }
 
         for ((planKey, plan) in portfolios) {
             if (!currentPortfolio.containsKey(planKey) && planKey != "KRW") {
                 log.info("$planKey > add target")
-                tempBuyCommand.add(Command(CommandType.BUY, planKey, price =  (plan * totalMoney)))
+                tempBuyCommand.add(Command.buy(planKey, price =  (plan * totalMoney)))
             }
         }
 
-        return tempBuyCommand.maxByOrNull { it.price } ?: Command()
+        val command = tempBuyCommand.maxBy { it.price }
+        log.info("${command.ticker} - 대상 신규 구매 ${command.price}원 시장가 매수")
+        return command
     }
 }
