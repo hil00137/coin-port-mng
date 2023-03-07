@@ -144,19 +144,22 @@ class UpbitScheduler(
         var portfolios= orgPortfolios.mapValues { it.value / planSum }
         portfolios = upbitIndexService.changeIndexRatio(portfolios, totalMoney)
 
-        val orgPortPercent = orgPortfolios.mapValues { "${it.value}%" }
-        val currentPortPercentage = currentPortfolio.mapValues { "${(it.value.price / totalMoney).toPercent(2)}%" }
-        val planPortPercentage = portfolios.mapValues { "${it.value.toPercent(2)}%" }
+        val orgPortPercent = orgPortfolios.mapValues { it.value }
+        val currentPortPercentage = currentPortfolio.mapValues { (it.value.price / totalMoney).toPercent(2) }
+        val planPortPercentage = portfolios.mapValues { it.value.toPercent(2) }
         val hyphenSize = planPortPercentage.size
         val hyphen = "--------------"
+        val diff = currentPortPercentage.diff(planPortPercentage)
         log.info("\n" +
                 "${hyphen * hyphenSize}\n" +
                 "| ${rebalanceMng.accessInfo.name} 포트폴리오 체크\n" +
-                "| 금    액 : ${totalMoney.toCurrency()}\n"+
-                "|\n" +
-                "| 계    획 : ${orgPortPercent.logForm()}\n" +
-                "| 수정 계획 : ${planPortPercentage.logForm()}\n" +
-                "| 현    재 : ${currentPortPercentage.logForm()}\n" +
+                "| 금      액 : ${totalMoney.toCurrency()}\n"+
+                "| 목표상대밴드 : ${rebalanceMng.bandCheck}%\n" +
+                "| 목 표 계 획 : ${orgPortPercent.logForm()}\n" +
+                "| 수정목표계획 : ${planPortPercentage.logForm()}\n" +
+                "| 현      재 : ${currentPortPercentage.logForm()}\n" +
+                "| 차      이 : ${diff.logForm()}\n" +
+                "| 밴      드 : ${planPortPercentage.calcGap(diff).logForm()}\n" +
                 (hyphen * hyphenSize)
         )
 
