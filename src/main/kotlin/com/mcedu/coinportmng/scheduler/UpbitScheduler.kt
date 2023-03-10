@@ -142,7 +142,7 @@ class UpbitScheduler(
         val totalMoney = currentPortfolio.values.sumOf { it.price }
         val planSum = orgPortfolios.values.sum()
         var portfolios= orgPortfolios.mapValues { it.value / planSum }
-        portfolios = upbitIndexService.changeIndexRatio(portfolios, totalMoney)
+        portfolios = upbitIndexService.changeIndexRatio(currentPortfolio, portfolios, totalMoney)
 
         val orgPortPercent = orgPortfolios.mapValues { it.value }
         val currentPortPercentage = currentPortfolio.mapValues { (it.value.price / totalMoney).toPercent(2) }

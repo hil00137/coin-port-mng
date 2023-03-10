@@ -109,7 +109,7 @@ class RebalanceScheduler(
         portfolios = portfolios.mapValues { it.value / planSum }
 
         val totalMoney = currentPortfolio.values.sumOf { it.price }
-        portfolios = upbitIndexService.changeIndexRatio(portfolios, totalMoney)
+        portfolios = upbitIndexService.changeIndexRatio(currentPortfolio, portfolios, totalMoney)
 
         val pairMap = currentPortfolio.mapValues { Pair(it.value.price, it.value.price / totalMoney) }
         val tempBuyCommand = hashSetOf<Command>()

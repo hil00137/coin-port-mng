@@ -3,6 +3,7 @@ package com.mcedu.coinportmng.service
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.mcedu.coinportmng.dto.CoinPrice
 import com.mcedu.coinportmng.dto.IndexMarket
 import com.mcedu.coinportmng.repository.UpbitIndexInfoRepository
 import com.mcedu.coinportmng.type.UpbitIndex
@@ -17,7 +18,11 @@ class UpbitIndexService(
     private val objectMapper = ObjectMapper().registerKotlinModule()
 
     @Transactional(readOnly = true)
-    fun changeIndexRatio(portfolios: Map<String, Double>, totalMoney: Double): Map<String, Double> {
+    fun changeIndexRatio(
+        currentPortfolio: MutableMap<String, CoinPrice>,
+        portfolios: Map<String, Double>,
+        totalMoney: Double
+    ): Map<String, Double> {
         val resultPortfolios = portfolios.toMutableMap()
         val removeKey= hashMapOf<String, Map<String, Double>>()
         for ((key, ratio) in portfolios) {
@@ -28,7 +33,7 @@ class UpbitIndexService(
                     upbitIndexInfoRepository.findByName(upbitIndex)?.detailJson,
                     object : TypeReference<List<IndexMarket>>() {})
                     .filter {
-                        if (portfolios.containsKey(it.code)) {
+                        if (currentPortfolio.containsKey(it.code)) {
                             it.componentRatio * idxMoney > 7000
                         } else {
                             it.componentRatio * idxMoney > 10000
