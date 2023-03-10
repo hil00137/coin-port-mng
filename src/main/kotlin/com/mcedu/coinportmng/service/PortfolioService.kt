@@ -10,6 +10,7 @@ import com.mcedu.coinportmng.repository.AccessInfoRepository
 import com.mcedu.coinportmng.repository.CoinRepository
 import com.mcedu.coinportmng.repository.PortfolioRepository
 import com.mcedu.coinportmng.type.IsYN
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -21,6 +22,7 @@ class PortfolioService(
     private val upbitService: UpbitService
 ) {
 
+    private val log = LoggerFactory.getLogger(this::class.java)
     @Transactional(readOnly = true)
     fun getPortfolios(accessInfoSeq: Long): List<PortfolioDto> {
         val accessInfo =
@@ -55,6 +57,7 @@ class PortfolioService(
         if (infos.isNotEmpty()) {
             portfolioRepository.deleteAll(infos.values)
         }
+        log.info("${accessInfo.name} 포트폴리오가 저장되었습니다.")
     }
 
     fun getCurrentPortfolio(accessInfoSeq: Long): MutableMap<String, CoinPrice> {

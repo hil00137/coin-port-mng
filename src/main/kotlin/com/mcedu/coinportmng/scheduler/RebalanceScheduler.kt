@@ -14,6 +14,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import kotlin.math.abs
+import kotlin.math.roundToLong
 
 @Component
 class RebalanceScheduler(
@@ -142,8 +143,6 @@ class RebalanceScheduler(
                 if (overMoney >= Market.KRW.getExtraBalance()) {
                     val volume = balance * ((overMoney) / (currentPortfolio[key]?.price ?: 0.0))
                     tempSellCommands.add(Command(CommandType.SELL, key, volume = volume, price = overMoney))
-                } else {
-                    rebalanceCommands.add(Command.forRebalance(key))
                 }
                 continue
             }
@@ -152,8 +151,6 @@ class RebalanceScheduler(
                 val notEnoughMoney = diff * totalMoney
                 if (notEnoughMoney >= Market.KRW.getExtraBalance()) {
                     tempBuyCommand.add(Command.buy(key, price = notEnoughMoney))
-                } else {
-                    rebalanceCommands.add(Command.forRebalance(key))
                 }
             }
         }
@@ -166,7 +163,7 @@ class RebalanceScheduler(
 
         if (rebalanceCommands.isNotEmpty()) {
             val command = rebalanceCommands.first()
-            log.info("${command.ticker} - 대상 제거를 위한 추가 ${command.price}원 시장가 매수")
+            log.info("${command.ticker} - 대상 제거를 위한 추가 ${command.price.roundToLong()}원 시장가 매수")
             return command
         }
 
@@ -177,8 +174,10 @@ class RebalanceScheduler(
             }
         }
 
-        val command = tempBuyCommand.maxBy { it.price }
-        log.info("${command.ticker} - 대상 신규 구매 ${command.price}원 시장가 매수")
-        return command
+        val command = tempBuyCommand.maxByOrNull { it.price }
+
+        return command?.also {
+            log.info("${command.ticker} - 대상 신규 구매 ${command.price}원 시장가 매수")
+        } ?: Command()
     }
 }
