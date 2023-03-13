@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.mcedu.coinportmng.entity.DaySnapshot
 import com.mcedu.coinportmng.entity.HourSnapshot
 import com.mcedu.coinportmng.entity.MinuteSnapshot
+import com.mcedu.coinportmng.extention.getNextDay
+import com.mcedu.coinportmng.extention.getNextHour
 import com.mcedu.coinportmng.repository.AccessInfoRepository
 import com.mcedu.coinportmng.repository.DaySnapshotRepository
 import com.mcedu.coinportmng.repository.HourSnapshotRepository
@@ -53,18 +55,20 @@ class SnapshotScheduler(
             log.info("DELETE ${now.minusDays(1).format(pattern)} minute snapshot")
         }
 
-        if (now.minute != 0) {
-            return
-        }
-        hourSnapshotRepository.save(HourSnapshot(minuteSnapshot))
+        val nextHour = now.getNextHour()
+        val hourSnapshot = hourSnapshotRepository.findByAccessInfoAndTime(accessInfo, nextHour)
+            ?: HourSnapshot(minuteSnapshot)
+        hourSnapshot.update(minuteSnapshot, nextHour)
+        hourSnapshotRepository.save(hourSnapshot)
         if (hourSnapshotRepository.deleteAllByAccessInfoAndTimeBefore(accessInfo, now.minusMonths(1)) > 0) {
             log.info("DELETE ${now.minusMonths(1).format(pattern)} hour snapshot")
         }
 
-        if (now.hour != 9) {
-            return
-        }
-        daySnapshotRepository.save(DaySnapshot(minuteSnapshot))
+        val nextDay = now.getNextDay()
+        val daySnapshot =
+            daySnapshotRepository.findByAccessInfoAndTime(accessInfo, nextDay) ?: DaySnapshot(minuteSnapshot)
+        daySnapshot.update(minuteSnapshot, nextDay)
+        daySnapshotRepository.save(daySnapshot)
         if (daySnapshotRepository.deleteAllByAccessInfoAndTimeBefore(accessInfo, now.minusYears(1)) > 0) {
             log.info("DELETE ${now.minusYears(1).format(pattern)} day snapshot")
         }

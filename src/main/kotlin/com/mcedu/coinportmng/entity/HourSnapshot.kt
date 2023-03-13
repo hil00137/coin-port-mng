@@ -24,11 +24,17 @@ data class HourSnapshot(
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "access_info_seq", referencedColumnName = "seq")
     val accessInfo: AccessInfo,
-    val time: LocalDateTime,
+    var time: LocalDateTime,
     @Column(length = 2000)
-    val snapshot: String,
-    val totalMoney: Long
+    var snapshot: String,
+    var totalMoney: Long
 ) {
+    fun update(minuteSnapshot: MinuteSnapshot, nextHour: LocalDateTime) {
+        snapshot = minuteSnapshot.snapshot
+        totalMoney = minuteSnapshot.totalMoney
+        time = nextHour
+    }
+
     constructor(minuteSnapshot: MinuteSnapshot) : this(
         accessInfo = minuteSnapshot.accessInfo,
         time = minuteSnapshot.time,

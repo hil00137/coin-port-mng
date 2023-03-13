@@ -7,4 +7,5 @@ import java.time.LocalDateTime
 
 interface DaySnapshotRepository: JpaRepository<DaySnapshot, Long> {
     fun deleteAllByAccessInfoAndTimeBefore(accessInfo: AccessInfo, time: LocalDateTime): Int
+    fun findByAccessInfoAndTime(accessInfo: AccessInfo, time: LocalDateTime): DaySnapshot?
 }
