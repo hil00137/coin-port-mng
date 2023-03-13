@@ -182,9 +182,9 @@ class UpbitScheduler(
                 return true
             }
 
-            val overPercent = (abs(pair.second - plan) / plan) * 100.0
+            val overPercent = (abs(pair.second - plan) / plan).toPercent(2)
             if(overPercent > rebalanceMng.bandCheck) {
-                log.info("$key > plan : ${plan * 100} , now : ${pair.second * 100} , over : $overPercent")
+                log.info("$key > plan : ${plan.toPercent(2)}% , now : ${pair.second.toPercent(2)}% , diff : $overPercent%")
                 return true
             }
         }
