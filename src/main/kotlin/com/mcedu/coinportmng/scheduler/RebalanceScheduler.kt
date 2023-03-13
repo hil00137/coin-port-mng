@@ -2,6 +2,7 @@ package com.mcedu.coinportmng.scheduler
 
 import com.mcedu.coinportmng.dto.Command
 import com.mcedu.coinportmng.dto.PortfolioJobDto
+import com.mcedu.coinportmng.extention.orZero
 import com.mcedu.coinportmng.repository.PortfolioRebalanceJobRepository
 import com.mcedu.coinportmng.service.PortfolioService
 import com.mcedu.coinportmng.service.UpbitIndexService
@@ -122,9 +123,10 @@ class RebalanceScheduler(
             }
             val plan = portfolios[key]
             val balance = currentPortfolio[key]?.balance ?: 0.0
+            val marketMin = Market.KRW.getExtraBalance()
             if (plan == null) {
                 log.info("$key - 포트폴리오 대상 아님 판매")
-                if (pair.first < Market.KRW.getExtraBalance()) {
+                if (pair.first < marketMin) {
                     rebalanceCommands.add(Command.forRebalance(key))
                 } else {
                     tempSellCommands.add(Command(CommandType.SELL, key, volume = balance, price = pair.first))
@@ -137,20 +139,23 @@ class RebalanceScheduler(
                 continue
             }
 
-
+            val diffMoney = diff * totalMoney
             if (plan < pair.second) {
-                val overMoney = diff * totalMoney
-                if (overMoney >= Market.KRW.getExtraBalance()) {
-                    val volume = balance * ((overMoney) / (currentPortfolio[key]?.price ?: 0.0))
-                    tempSellCommands.add(Command(CommandType.SELL, key, volume = volume, price = overMoney))
+                if (diffMoney >= marketMin) {
+                    val volume = balance * ((diffMoney) / (currentPortfolio[key]?.price.orZero()))
+                    tempSellCommands.add(Command(CommandType.SELL, key, volume = volume, price = diffMoney))
+                } else if (diffMoney >= marketMin / 2) {
+                    rebalanceCommands.add(Command.forRebalance(key))
+                } else {
+                    log.info("$key - gap : ${diffMoney.roundToLong()}원 do not cell")
                 }
-                continue
-            }
-
-            if (plan > pair.second) {
-                val notEnoughMoney = diff * totalMoney
-                if (notEnoughMoney >= Market.KRW.getExtraBalance()) {
-                    tempBuyCommand.add(Command.buy(key, price = notEnoughMoney))
+            } else if (plan > pair.second) {
+                if (diffMoney >= marketMin) {
+                    tempBuyCommand.add(Command.buy(key, price = diffMoney))
+                } else if (diffMoney >= marketMin / 2) {
+                    rebalanceCommands.add(Command.forRebalance(key))
+                } else {
+                    log.info("$key - gap : ${diffMoney.roundToLong()}원 do not buy")
                 }
             }
         }

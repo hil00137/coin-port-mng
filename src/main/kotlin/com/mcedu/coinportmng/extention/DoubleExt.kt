@@ -28,3 +28,5 @@ fun Double.addSign(): String {
 fun Double.toCurrency(): String {
     return NumberFormat.getCurrencyInstance(Locale.KOREA).format(this.roundToLong())
 }
+
+fun Double?.orZero(): Double = this?:0.0
