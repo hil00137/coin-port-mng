@@ -19,4 +19,10 @@ class SessionService(private val accessInfoRepository: AccessInfoRepository) {
         }
         log.info("로그인 성공 : ${accessInfo?.name}")
     }
+
+    fun logout() {
+        val name = accessInfo?.name
+        accessInfo = null
+        log.info("로그아웃 성공 : $name")
+    }
 }

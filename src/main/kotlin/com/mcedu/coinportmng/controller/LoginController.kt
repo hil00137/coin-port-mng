@@ -17,4 +17,10 @@ class LoginController(private val sessionService: SessionService) {
         sessionService.login(seq.getInfoSeq())
         return ResponseDto.success("로그인 성공")
     }
+
+    @PostMapping("/logout")
+    fun logOut(): ResponseDto<Nothing> {
+        sessionService.logout()
+        return ResponseDto.success("로그아웃 성공")
+    }
 }
