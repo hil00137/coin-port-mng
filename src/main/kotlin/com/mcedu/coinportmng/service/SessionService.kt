@@ -29,8 +29,8 @@ class SessionService(private val accessInfoRepository: AccessInfoRepository) {
     }
 
     @Transactional(readOnly = true)
-    fun getAccessInfo(): AccessInfo {
-        return findAccessInfo(accessInfoSeq = this.accessInfo?.seq)
+    fun getAccessInfo(accessInfoSeq: Long? = null): AccessInfo {
+        return findAccessInfo(accessInfoSeq = accessInfoSeq ?: this.accessInfo?.seq)
     }
 
     private fun findAccessInfo(accessInfoSeq: Long?): AccessInfo {

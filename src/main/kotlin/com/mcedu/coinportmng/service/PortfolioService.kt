@@ -19,14 +19,14 @@ class PortfolioService(
     private val coinRepository: CoinRepository,
     private val accessInfoRepository: AccessInfoRepository,
     private val portfolioRepository: PortfolioRepository,
-    private val upbitService: UpbitService
+    private val upbitService: UpbitService,
+    private val sessionService: SessionService
 ) {
 
     private val log = LoggerFactory.getLogger(this::class.java)
     @Transactional(readOnly = true)
-    fun getPortfolios(accessInfoSeq: Long): List<PortfolioDto> {
-        val accessInfo =
-            accessInfoRepository.findById(accessInfoSeq).orElseThrow { RuntimeException("존재하지 않는 저장소 정보입니다.") }
+    fun getPortfolios(accessInfoSeq: Long? = null): List<PortfolioDto> {
+        val accessInfo = sessionService.getAccessInfo(accessInfoSeq)
         val infos = portfolioRepository.findAllByAccessInfo(accessInfo)
 
         val dtos = infos.map { PortfolioDto(it) }.toMutableList()

@@ -15,9 +15,9 @@ class CoinPortfolioController(
 ) {
 
     private val log = LoggerFactory.getLogger(this::class.java)
-    @GetMapping("/v1/portfolio/{seq}")
-    fun getPortfolio(@PathVariable seq: String?): List<PortfolioDto> {
-        return portfolioService.getPortfolios(seq.getInfoSeq())
+    @GetMapping("/v1/portfolio")
+    fun getPortfolio(): List<PortfolioDto> {
+        return portfolioService.getPortfolios()
     }
 
     @PostMapping("/v1/portfolio/{seq}")
