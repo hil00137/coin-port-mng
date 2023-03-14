@@ -4,7 +4,6 @@ import com.mcedu.coinportmng.common.IntervalConstant
 import com.mcedu.coinportmng.dto.RebalancePlanDto
 import com.mcedu.coinportmng.entity.RebalanceMng
 import com.mcedu.coinportmng.extention.getSecondsOfDay
-import com.mcedu.coinportmng.repository.AccessInfoRepository
 import com.mcedu.coinportmng.repository.RebalanceMngRepository
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -13,7 +12,6 @@ import java.time.LocalTime
 
 @Service
 class RebalanceMngService(
-    private val accessInfoRepository: AccessInfoRepository,
     private val rebalanceMngRepository: RebalanceMngRepository,
     private val sessionService: SessionService
 ) {
@@ -27,9 +25,9 @@ class RebalanceMngService(
     }
 
     @Transactional
-    fun upsertRebalnaceMng(infoSeq: Long, planDto: RebalancePlanDto) {
+    fun upsertRebalnaceMng(planDto: RebalancePlanDto) {
         validationCheck(planDto)
-        val accessInfo = accessInfoRepository.findById(infoSeq).orElseThrow { RuntimeException("존재하지 않는 정보입니다.") }
+        val accessInfo = sessionService.getAccessInfo()
         val rebalanceMng = rebalanceMngRepository.findRebalanceMngByAccessInfo(accessInfo)
         val baseTime = LocalTime.of(planDto.baseHour, planDto.baseMinute).getSecondsOfDay()
         if (rebalanceMng == null) {
