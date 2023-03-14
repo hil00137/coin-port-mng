@@ -19,9 +19,9 @@ class RebalanceMngController(
 ){
 
     private val log = LoggerFactory.getLogger(this::class.java)
-    @GetMapping("/v1/reblance-info/{seq}")
-    fun getRebalanceMng(@PathVariable seq: String?): RebalancePlanDto? {
-        return rebalanceMngService.getRebalanceMng(seq.getInfoSeq())
+    @GetMapping("/v1/reblance-info")
+    fun getRebalanceMng(): RebalancePlanDto? {
+        return rebalanceMngService.getRebalanceMng()
     }
 
     @PostMapping("/v1/rebalance-info/{seq}")

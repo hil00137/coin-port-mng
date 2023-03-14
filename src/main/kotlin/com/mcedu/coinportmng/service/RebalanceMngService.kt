@@ -14,12 +14,13 @@ import java.time.LocalTime
 @Service
 class RebalanceMngService(
     private val accessInfoRepository: AccessInfoRepository,
-    private val rebalanceMngRepository: RebalanceMngRepository
+    private val rebalanceMngRepository: RebalanceMngRepository,
+    private val sessionService: SessionService
 ) {
 
     @Transactional(readOnly = true)
-    fun getRebalanceMng(infoSeq: Long): RebalancePlanDto? {
-        val accessInfo = accessInfoRepository.findById(infoSeq).orElseThrow { RuntimeException("존재하지 않는 정보입니다.") }
+    fun getRebalanceMng(): RebalancePlanDto? {
+        val accessInfo = sessionService.getAccessInfo()
         return rebalanceMngRepository.findRebalanceMngByAccessInfo(accessInfo)?.let {
             RebalancePlanDto(it)
         }
