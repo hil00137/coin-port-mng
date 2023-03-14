@@ -33,6 +33,7 @@ data class RebalanceMng(
     var interval: String,
     var bandRebalance: Boolean = false,
     var bandCheck: Double,
+    var absBandCheck: Double,
     var active: Boolean = false,
     @CreatedDate
     val createdDate: LocalDateTime = LocalDateTime.now(),

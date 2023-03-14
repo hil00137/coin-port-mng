@@ -10,7 +10,8 @@ data class RebalancePlanDto(
     val interval: String,
     val active: Boolean,
     val bandRebalance: Boolean,
-    val bandCheck: Double
+    val bandCheck: Double,
+    val absBandCheck: Double
 ) {
     constructor(rebalanceMng: RebalanceMng) : this(
         baseMonth = rebalanceMng.baseMonth,
@@ -20,6 +21,7 @@ data class RebalancePlanDto(
         interval = rebalanceMng.interval,
         active = rebalanceMng.active,
         bandRebalance = rebalanceMng.bandRebalance,
-        bandCheck = rebalanceMng.bandCheck
+        bandCheck = rebalanceMng.bandCheck,
+        absBandCheck = rebalanceMng.absBandCheck
     )
 }

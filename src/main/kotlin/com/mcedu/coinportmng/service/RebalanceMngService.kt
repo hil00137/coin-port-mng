@@ -40,7 +40,8 @@ class RebalanceMngService(
                     interval = planDto.interval,
                     active = planDto.active,
                     bandRebalance = planDto.bandRebalance,
-                    bandCheck = planDto.bandCheck
+                    bandCheck = planDto.bandCheck,
+                    absBandCheck = planDto.absBandCheck
                 )
             )
         } else {
@@ -52,6 +53,7 @@ class RebalanceMngService(
                 this.active = planDto.active
                 this.bandRebalance = planDto.bandRebalance
                 this.bandCheck = planDto.bandCheck
+                this.absBandCheck = planDto.absBandCheck
             }
         }
     }
