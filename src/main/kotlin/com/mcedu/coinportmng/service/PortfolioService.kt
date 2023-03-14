@@ -6,7 +6,6 @@ import com.mcedu.coinportmng.dto.CoinPrice
 import com.mcedu.coinportmng.type.Market
 import com.mcedu.coinportmng.dto.PortfolioDto
 import com.mcedu.coinportmng.entity.Portfolio
-import com.mcedu.coinportmng.repository.AccessInfoRepository
 import com.mcedu.coinportmng.repository.CoinRepository
 import com.mcedu.coinportmng.repository.PortfolioRepository
 import com.mcedu.coinportmng.type.IsYN
@@ -17,7 +16,6 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class PortfolioService(
     private val coinRepository: CoinRepository,
-    private val accessInfoRepository: AccessInfoRepository,
     private val portfolioRepository: PortfolioRepository,
     private val upbitService: UpbitService,
     private val sessionService: SessionService
@@ -37,9 +35,8 @@ class PortfolioService(
     }
 
     @Transactional
-    fun savePortfolios(accessInfoSeq: Long, list: List<PortfolioDto>) {
-        val accessInfo =
-            accessInfoRepository.findById(accessInfoSeq).orElseThrow { RuntimeException("존재하지 않는 저장소 정보입니다.") }
+    fun savePortfolios(list: List<PortfolioDto>) {
+        val accessInfo = sessionService.getAccessInfo()
         val infos = portfolioRepository.findAllByAccessInfo(accessInfo).associateBy { it.ticker }.toMutableMap()
         val newInfos = mutableListOf<Portfolio>()
         list.forEach {

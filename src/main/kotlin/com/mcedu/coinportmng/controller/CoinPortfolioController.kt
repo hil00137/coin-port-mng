@@ -2,7 +2,6 @@ package com.mcedu.coinportmng.controller
 
 import com.mcedu.coinportmng.common.ResponseDto
 import com.mcedu.coinportmng.dto.PortfolioDto
-import com.mcedu.coinportmng.extention.getInfoSeq
 import com.mcedu.coinportmng.service.PortfolioService
 import org.slf4j.LoggerFactory
 import org.springframework.web.bind.annotation.*
@@ -20,9 +19,9 @@ class CoinPortfolioController(
         return portfolioService.getPortfolios()
     }
 
-    @PostMapping("/v1/portfolio/{seq}")
-    fun savePortfolio(@PathVariable seq: String?, @RequestBody list: List<PortfolioDto>): ResponseDto<Nothing> {
-        portfolioService.savePortfolios(seq.getInfoSeq(), list)
+    @PostMapping("/v1/portfolio")
+    fun savePortfolio(@RequestBody list: List<PortfolioDto>): ResponseDto<Nothing> {
+        portfolioService.savePortfolios(list)
         return ResponseDto.success("포트폴리오가 저장되었습니다.")
     }
 }
