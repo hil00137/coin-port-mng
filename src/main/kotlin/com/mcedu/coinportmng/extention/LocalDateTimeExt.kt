@@ -23,7 +23,7 @@ fun LocalDateTime.getNextDay(): LocalDateTime {
     return if (this.hour == 9 && this.minute == 0) {
         this
     } else {
-        if (this.hour > 9) {
+        if (this.hour >= 9) {
             this.plusDays(1)
         } else {
             this

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.mcedu.coinportmng.dto.CoinPrice
 import com.mcedu.coinportmng.dto.IndexMarket
+import com.mcedu.coinportmng.dto.Ratio
 import com.mcedu.coinportmng.repository.UpbitIndexInfoRepository
 import com.mcedu.coinportmng.type.UpbitIndex
 import org.springframework.stereotype.Service
@@ -20,14 +21,14 @@ class UpbitIndexService(
     @Transactional(readOnly = true)
     fun changeIndexRatio(
         currentPortfolio: MutableMap<String, CoinPrice>,
-        portfolios: Map<String, Double>,
-        totalMoney: Double
-    ): Map<String, Double> {
+        portfolios: Map<String, Ratio>
+    ): Map<String, Ratio> {
+        val totalMoney = currentPortfolio.values.sumOf { it.price }
         val resultPortfolios = portfolios.toMutableMap()
         val removeKey= hashMapOf<String, Map<String, Double>>()
         for ((key, ratio) in portfolios) {
             if (key.startsWith("IDX.")) {
-                val idxMoney = totalMoney * ratio
+                val idxMoney = totalMoney * ratio.value
                 val upbitIndex = UpbitIndex.valueOf(key.removePrefix("IDX."))
                 var upbitIndexInfo = objectMapper.readValue(
                     upbitIndexInfoRepository.findByName(upbitIndex)?.detailJson,
@@ -44,7 +45,7 @@ class UpbitIndexService(
 
                 val indexSum = upbitIndexInfo.values.sum()
 
-                upbitIndexInfo = upbitIndexInfo.mapValues { it.value / indexSum }.mapValues { it.value * ratio }
+                upbitIndexInfo = upbitIndexInfo.mapValues { it.value / indexSum }.mapValues { it.value * ratio.value }
                 removeKey[key] = upbitIndexInfo
             }
         }
@@ -52,9 +53,8 @@ class UpbitIndexService(
         for ((key, upbitIndexInfo) in removeKey) {
             resultPortfolios.remove(key)
             for ((ticker, ratio) in upbitIndexInfo) {
-                var orgRatio = portfolios[ticker] ?: 0.0
-                orgRatio += ratio
-                resultPortfolios[ticker] = orgRatio
+                val orgRatio = portfolios[ticker] ?: Ratio()
+                resultPortfolios[ticker] = orgRatio.add(ratio)
             }
         }
         return resultPortfolios

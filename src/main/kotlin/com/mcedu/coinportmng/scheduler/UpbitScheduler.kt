@@ -11,7 +11,10 @@ import com.mcedu.coinportmng.common.IntervalConstant.MONTHLY
 import com.mcedu.coinportmng.common.IntervalConstant.QUARTER_HOURLY
 import com.mcedu.coinportmng.common.IntervalConstant.TEN_MINUTELY
 import com.mcedu.coinportmng.common.IntervalConstant.YEARLY
+import com.mcedu.coinportmng.dto.CoinPrice
 import com.mcedu.coinportmng.dto.IndexMarket
+import com.mcedu.coinportmng.dto.PortfolioRatio
+import com.mcedu.coinportmng.dto.Ratio
 import com.mcedu.coinportmng.entity.Coin
 import com.mcedu.coinportmng.entity.PortfolioRebalanceJob
 import com.mcedu.coinportmng.entity.RebalanceMng
@@ -28,7 +31,7 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
-import kotlin.math.abs
+import java.util.LinkedList
 
 @Component
 class UpbitScheduler(
@@ -137,31 +140,12 @@ class UpbitScheduler(
 
     private fun bandCheck(rebalanceMng: RebalanceMng): Boolean {
         val orgPortfolios = portfolioRepository.findAllByAccessInfo(rebalanceMng.accessInfo).associateBy { it.ticker }
-            .mapValues { it.value.ratio }
+            .mapValues { Ratio(it.value.ratio) }
         val currentPortfolio = portfolioService.getCurrentPortfolio(rebalanceMng.accessInfo.seq ?: 0)
-        val totalMoney = currentPortfolio.values.sumOf { it.price }
-        val planSum = orgPortfolios.values.sum()
-        var portfolios= orgPortfolios.mapValues { it.value / planSum }
-        portfolios = upbitIndexService.changeIndexRatio(currentPortfolio, portfolios, totalMoney)
-
-        val orgPortPercent = orgPortfolios.mapValues { it.value }
-        val currentPortPercentage = currentPortfolio.mapValues { (it.value.price / totalMoney).toPercent(2) }
-        val planPortPercentage = portfolios.mapValues { it.value.toPercent(2) }
-        val hyphenSize = planPortPercentage.size
-        val hyphen = "--------------"
-        val diff = currentPortPercentage.diff(planPortPercentage)
-        log.info("\n" +
-                "${hyphen * hyphenSize}\n" +
-                "| ${rebalanceMng.accessInfo.name} 포트폴리오 체크\n" +
-                "| 금      액 : ${totalMoney.toCurrency()}\n"+
-                "| 목표상대밴드 : ${rebalanceMng.bandCheck}%\n" +
-                "| 목 표 계 획 : ${orgPortPercent.logForm()}\n" +
-                "| 수정목표계획 : ${planPortPercentage.logForm()}\n" +
-                "| 현      재 : ${currentPortPercentage.logForm()}\n" +
-                "| 차      이 : ${diff.logForm()}\n" +
-                "| 밴      드 : ${planPortPercentage.calcGap(diff).logForm()}\n" +
-                (hyphen * hyphenSize)
-        )
+        val planSum = orgPortfolios.values.sumOf { it.value }
+        var portfolios= orgPortfolios.mapValues { Ratio(it.value.value / planSum) }
+        portfolios = upbitIndexService.changeIndexRatio(currentPortfolio, portfolios)
+        bandCheckLog(rebalanceMng, orgPortfolios, portfolios, currentPortfolio)
 
         for (planKey in portfolios.keys) {
             if (!currentPortfolio.containsKey(planKey)) {
@@ -169,10 +153,12 @@ class UpbitScheduler(
                 return true
             }
         }
-        val pairMap = currentPortfolio.mapValues { Pair(it.value.price, it.value.price / totalMoney) }
 
-        for ((key, pair) in pairMap) {
-            if (pair.first < 5000) {
+        val totalMoney = currentPortfolio.values.sumOf { it.price }
+        val currentPortfolioRatios = currentPortfolio.mapValues { PortfolioRatio(it.value.price, Ratio(it.value.price / totalMoney)) }
+
+        for ((key, portfolioRatio) in currentPortfolioRatios) {
+            if (portfolioRatio.price < 5000) {
                 log.info("$key > not enough money skip")
                 continue
             }
@@ -182,14 +168,42 @@ class UpbitScheduler(
                 return true
             }
 
-            val overPercent = (abs(pair.second - plan) / plan).toPercent(2)
+            val overPercent = ((portfolioRatio.ratio - plan) / portfolioRatio.ratio).abs().toPercent(2)
             if(overPercent > rebalanceMng.bandCheck) {
-                log.info("$key > plan : ${plan.toPercent(2)}% , now : ${pair.second.toPercent(2)}% , diff : $overPercent%")
+                log.info("$key > plan : ${plan.toPercent(2)}% , now : ${portfolioRatio.ratio.toPercent(2)}% , diff : $overPercent%")
                 return true
             }
         }
 
         return false
+    }
+
+    private fun bandCheckLog(
+        rebalanceMng: RebalanceMng,
+        orgPortfolios: Map<String, Ratio>,
+        portfolios: Map<String, Ratio>,
+        currentPortfolio: MutableMap<String, CoinPrice>
+    ) {
+        val planPortPercentage = portfolios.mapValues { it.value.value }
+        val totalMoney = currentPortfolio.values.sumOf { it.price }
+        val orgPortPercent = orgPortfolios.mapValues { it.value.value / 100.0 }
+        val currentPortPercentage = currentPortfolio.mapValues { (it.value.price / totalMoney) }
+        val diff = currentPortPercentage.diff(planPortPercentage)
+        val lines = LinkedList<String>()
+        lines.add("| ${rebalanceMng.accessInfo.name} 포트폴리오 체크")
+        lines.add("| 금      액 : ${totalMoney.toCurrency()}")
+        lines.add("| 목표상대밴드 : ${rebalanceMng.bandCheck}%")
+        lines.add("| 목 표 계 획 : ${orgPortPercent.logForm()}")
+        lines.add("| 수정목표계획 : ${planPortPercentage.logForm()}")
+        lines.add("| 현      재 : ${currentPortPercentage.logForm()}")
+        lines.add("| 차      이 : ${diff.logForm()}")
+        lines.add("| 밴      드 : ${currentPortPercentage.calcGap(planPortPercentage).logForm()}")
+
+        val hyphenSize = lines.maxOfOrNull { it.length } ?: 0
+        val bracket = "-" * hyphenSize
+        lines.addFirst(bracket)
+        lines.add(bracket)
+        log.info(lines.joinToString("\n", prefix = "\n"))
     }
 
     private fun checkIntervalSeconds(rebalanceMng: RebalanceMng, now: LocalDateTime, modulation: Int): Boolean =

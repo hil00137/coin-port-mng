@@ -2,6 +2,8 @@ package com.mcedu.coinportmng.scheduler
 
 import com.mcedu.coinportmng.dto.Command
 import com.mcedu.coinportmng.dto.PortfolioJobDto
+import com.mcedu.coinportmng.dto.PortfolioRatio
+import com.mcedu.coinportmng.dto.Ratio
 import com.mcedu.coinportmng.extention.orZero
 import com.mcedu.coinportmng.repository.PortfolioRebalanceJobRepository
 import com.mcedu.coinportmng.service.PortfolioService
@@ -14,7 +16,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
-import kotlin.math.abs
 import kotlin.math.roundToLong
 
 @Component
@@ -105,15 +106,14 @@ class RebalanceScheduler(
     }
 
     private fun portfolioCheck(): Command {
-        var portfolios = currentJob.portfolios.mapValues { it.value.ratio }
+        var portfolios = currentJob.portfolios.mapValues { Ratio(it.value.ratio) }
         val currentPortfolio = portfolioService.getCurrentPortfolio(currentJob.infoSeq ?: 0)
-        val planSum = portfolios.values.sum()
+        val planSum = portfolios.values.sumOf { it.value }
         portfolios = portfolios.mapValues { it.value / planSum }
+        portfolios = upbitIndexService.changeIndexRatio(currentPortfolio, portfolios)
 
         val totalMoney = currentPortfolio.values.sumOf { it.price }
-        portfolios = upbitIndexService.changeIndexRatio(currentPortfolio, portfolios, totalMoney)
-
-        val pairMap = currentPortfolio.mapValues { Pair(it.value.price, it.value.price / totalMoney) }
+        val pairMap = currentPortfolio.mapValues { PortfolioRatio(it.value.price, Ratio(it.value.price / totalMoney)) }
         val tempBuyCommand = hashSetOf<Command>()
         val tempSellCommands = hashSetOf<Command>()
         val rebalanceCommands = hashSetOf<Command>()
@@ -126,21 +126,21 @@ class RebalanceScheduler(
             val marketMin = Market.KRW.getExtraBalance()
             if (plan == null) {
                 log.info("$key - 포트폴리오 대상 아님 판매")
-                if (pair.first < marketMin) {
+                if (pair.price < marketMin) {
                     rebalanceCommands.add(Command.forRebalance(key))
                 } else {
-                    tempSellCommands.add(Command(CommandType.SELL, key, volume = balance, price = pair.first))
+                    tempSellCommands.add(Command(CommandType.SELL, key, volume = balance, price = pair.price))
                 }
                 break
             }
 
-            val diff = abs(pair.second - plan)
-            if (diff * 100 < 0.1) {
+            val diff = (pair.ratio - plan)
+            if (diff.toPercent(2) < 0.1) {
                 continue
             }
 
-            val diffMoney = diff * totalMoney
-            if (plan < pair.second) {
+            val diffMoney = diff.abs() * totalMoney
+            if (plan < pair.ratio) {
                 if (diffMoney >= marketMin) {
                     val volume = balance * ((diffMoney) / (currentPortfolio[key]?.price.orZero()))
                     tempSellCommands.add(Command(CommandType.SELL, key, volume = volume, price = diffMoney))
@@ -149,7 +149,7 @@ class RebalanceScheduler(
                 } else {
                     log.info("$key - gap : ${diffMoney.roundToLong()}원 do not cell")
                 }
-            } else if (plan > pair.second) {
+            } else if (plan > pair.ratio) {
                 if (diffMoney >= marketMin) {
                     tempBuyCommand.add(Command.buy(key, price = diffMoney))
                 } else if (diffMoney >= marketMin / 2) {
@@ -175,7 +175,7 @@ class RebalanceScheduler(
         for ((planKey, plan) in portfolios) {
             if (!currentPortfolio.containsKey(planKey) && planKey != "KRW") {
                 log.info("$planKey > add target")
-                tempBuyCommand.add(Command.buy(planKey, price =  (plan * totalMoney)))
+                tempBuyCommand.add(Command.buy(planKey, price = (plan.value * totalMoney).roundToLong().toDouble()))
             }
         }
 

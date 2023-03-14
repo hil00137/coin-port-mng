@@ -3,7 +3,7 @@ package com.mcedu.coinportmng.extention
 import kotlin.math.abs
 
 fun Map<String, Double>.logForm(): String {
-    val entryList = this.mapValues { "${it.value}%" }.entries.sortedWith(Comparator { o1, o2 ->
+    val entryList = this.mapValues { "${it.value.toPercent(2)}%" }.entries.sortedWith(Comparator { o1, o2 ->
         val indexer: (String) -> Int = {
             if (it == "KRW") {
                 1
@@ -24,7 +24,7 @@ fun Map<String, Double>.diff(other: Map<String, Double>): Map<String, Double> {
     val resultMap = hashMapOf<String, Double>()
 
     for ((ticker, percent) in this) {
-        resultMap[ticker] = ((percent - other.getOrDefault(ticker, 0.0)) / 100.0).toPercent(2)
+        resultMap[ticker] = percent - other.getOrDefault(ticker, 0.0)
     }
     for ((ticker, percent) in other) {
         if (resultMap.contains(ticker)) continue
@@ -38,11 +38,11 @@ fun Map<String, Double>.calcGap(other: Map<String, Double>): Map<String, Double>
     val resultMap = hashMapOf<String, Double>()
 
     for ((ticker, percent) in this) {
-        val gap = other[ticker]
-        resultMap[ticker] = if (gap == null) {
+        val plan = other[ticker]
+        resultMap[ticker] = if (plan == null) {
              abs(percent)
         } else {
-            abs(gap / percent).toPercent(2)
+            abs((percent - plan) / percent)
         }
     }
 
