@@ -1,6 +1,7 @@
 package com.mcedu.coinportmng.scheduler
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.mcedu.coinportmng.entity.AccessInfo
 import com.mcedu.coinportmng.entity.DaySnapshot
 import com.mcedu.coinportmng.entity.HourSnapshot
 import com.mcedu.coinportmng.entity.MinuteSnapshot
@@ -35,8 +36,13 @@ class SnapshotScheduler(
     @Scheduled(cron = "0 * * * * *")
     @Transactional
     fun snapShot() {
-        val accessInfo = accessInfoRepository.findById(3).orElseThrow { RuntimeException("존재하지 않는 저장소 정보입니다.") }
         val now = LocalDateTime.now().withSecond(0).withNano(0)
+        for (accessInfo in accessInfoRepository.findAll()) {
+            innerSnapshot(accessInfo, now)
+        }
+    }
+
+    private fun innerSnapshot(accessInfo: AccessInfo, now: LocalDateTime) {
         val priceMap = portfolioService.getCurrentPortfolio(accessInfo.seq ?: 0)
             .mapValues { it.value.copy(price = it.value.price.roundToLong().toDouble()) }
         val prices = objectMapper.writeValueAsString(priceMap)
