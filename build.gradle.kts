@@ -32,6 +32,10 @@ dependencies {
     compileOnly("org.springframework.boot:spring-boot-devtools")
 }
 
+tasks.jar {
+    enabled = false
+}
+
 tasks.withType<KotlinCompile> {
     kotlinOptions {
         freeCompilerArgs = listOf("-Xjsr305=strict")
