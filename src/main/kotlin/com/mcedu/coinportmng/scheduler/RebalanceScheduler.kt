@@ -135,25 +135,18 @@ class RebalanceScheduler(
             }
 
             val diff = (pair.ratio - plan)
-            if (diff.toPercent(2) < 0.1) {
-                continue
-            }
 
             val diffMoney = diff.abs() * totalMoney
             if (plan < pair.ratio) {
                 if (diffMoney >= marketMin) {
                     val volume = balance * ((diffMoney) / (currentPortfolio[key]?.price.orZero()))
                     tempSellCommands.add(Command(CommandType.SELL, key, volume = volume, price = diffMoney))
-                } else if (diffMoney >= marketMin / 2) {
-                    rebalanceCommands.add(Command.forRebalance(key))
                 } else {
                     log.info("$key - gap : ${diffMoney.roundToLong()}원 do not cell")
                 }
             } else if (plan > pair.ratio) {
                 if (diffMoney >= marketMin) {
                     tempBuyCommand.add(Command.buy(key, price = diffMoney))
-                } else if (diffMoney >= marketMin / 2) {
-                    rebalanceCommands.add(Command.forRebalance(key))
                 } else {
                     log.info("$key - gap : ${diffMoney.roundToLong()}원 do not buy")
                 }
