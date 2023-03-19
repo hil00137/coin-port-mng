@@ -89,13 +89,11 @@ class UpbitScheduler(
                     "${it.first}: ${it.second.addSign()}%"
                 }
                 if (checkChange.isNotEmpty()) {
-                    val hyphen = "---------------" * checkChange.size
-                    log.info("\n" +
-                            "$hyphen\n" +
-                            "| ${upbitIndex.desc} 변경\n" +
-                            "| ${checkChange.joinToString(" | ")}\n" +
-                            hyphen
-                    )
+                    val textList : MutableList<String> = mutableListOf("| ${upbitIndex.desc} 변경", "| ${checkChange.joinToString(" | ")}")
+                    val hyphen = "-" * (textList.maxOfOrNull { it.length } ?: 0)
+                    textList.add(0, hyphen)
+                    textList.add(hyphen)
+                    log.info("\n" + textList.joinToString("\n"))
                 }
             }
             upbitIndexInfo.detailJson = detail
