@@ -168,7 +168,15 @@ class UpbitScheduler(
                 return true
             }
 
-            val overPercent = ((portfolioRatio.ratio - plan) / portfolioRatio.ratio).abs().toPercent(2)
+            val diff = portfolioRatio.ratio - plan
+            val diffPercent = diff.abs().toPercent(2)
+            if (diffPercent > rebalanceMng.absBandCheck) {
+                log.info("$key > plan : ${plan.toPercent(2)}% , now : ${portfolioRatio.ratio.toPercent(2)}% , diff : $diffPercent%")
+                return true
+            }
+
+            val overPercent = (diff / portfolioRatio.ratio).abs().toPercent(2)
+
             if(overPercent > rebalanceMng.bandCheck) {
                 log.info("$key > plan : ${plan.toPercent(2)}% , now : ${portfolioRatio.ratio.toPercent(2)}% , diff : $overPercent%")
                 return true
@@ -192,7 +200,7 @@ class UpbitScheduler(
         val lines = LinkedList<String>()
         lines.add("| ${rebalanceMng.accessInfo.name} 포트폴리오 체크")
         lines.add("| 금      액 : ${totalMoney.toCurrency()}")
-        lines.add("| 목표상대밴드 : ${rebalanceMng.bandCheck}%")
+        lines.add("| 목 표 밴 드 : 상대 - ${rebalanceMng.bandCheck}%, 절대 - ${rebalanceMng.absBandCheck}")
         lines.add("| 목 표 계 획 : ${orgPortPercent.logForm()}")
         lines.add("| 수정목표계획 : ${planPortPercentage.logForm()}")
         lines.add("| 현      재 : ${currentPortPercentage.logForm()}")
