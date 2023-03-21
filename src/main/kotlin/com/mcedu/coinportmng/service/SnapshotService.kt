@@ -19,6 +19,6 @@ class SnapshotService(
             "hour" -> hourSnapshotRepository.findAll().map { SnapshotDto(time = it.time, totalMoney = it.totalMoney) }
             "day" -> daySnapshotRepository.findAll().map { SnapshotDto(time = it.time, totalMoney = it.totalMoney) }
             else -> throw RuntimeException("올바르지 않은 타입 [$type]입니다.\n가능한 타입은 'day' 입니다.")
-        }
+        }.sortedBy { it.time }
     }
 }
