@@ -6,5 +6,6 @@ import java.time.LocalDateTime
 data class SnapshotDto(
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
     val time: LocalDateTime,
-    val totalMoney: Long
+    val totalMoney: Long,
+    val snapshot: String
 )
