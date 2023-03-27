@@ -7,7 +7,6 @@ import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.google.gson.Gson
 import com.mcedu.coinportmng.dto.*
 import com.mcedu.coinportmng.repository.AccessInfoRepository
-import com.mcedu.coinportmng.type.CommandType
 import com.mcedu.coinportmng.type.UpbitIndex
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -109,36 +108,19 @@ class UpbitService(
         command: Command
     ): UpbitOrderResponse? {
         val accessInfo = accessInfoRepository.findByIdOrNull(infoSeq) ?: throw RuntimeException("존재하지 않는 저장소 정보입니다.")
-        val accessKey = accessInfo.accessKey
-        val secretKey = accessInfo.secretKey
+        val (_, _,accessKey , secretKey) = accessInfo
 
-        val params = HashMap<String, String>()
-        params["market"] = "KRW-${command.ticker}"
-        if (command.commandType == CommandType.SELL) {
-            params["side"] = "ask"
-            params["volume"] = "${command.volume}"
-            params["ord_type"] = "market"
-        } else if(command.commandType == CommandType.BUY) {
-            params["side"] = "bid"
-            params["price"] = "${command.price}"
-            params["ord_type"] = "price"
-        }
-
-        val queryElements = ArrayList<String>()
-        for ((key, value) in params) {
-            queryElements.add("$key=$value")
-        }
-
-        val queryString = queryElements.joinToString("&")
-
+        val param = OrderParam()
+        param.setMarket("KRW-${command.ticker}")
+        param.setCommand(command)
+        val queryString = param.getQueryElements()
         val jwtToken = getJwtToken(queryString, secretKey, accessKey)
-
 
         val headers = HttpHeaders()
         headers.contentType = MediaType.APPLICATION_JSON
         headers.setBearerAuth(jwtToken)
         val exchange = restTemplate.exchange(
-            RequestEntity<String>(Gson().toJson(params), headers, HttpMethod.POST, URI("$apiUrl/v1/orders")),
+            RequestEntity<String>(Gson().toJson(param.params), headers, HttpMethod.POST, URI("$apiUrl/v1/orders")),
             UpbitOrderResponse::class.java
         )
         return exchange.body
