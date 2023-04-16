@@ -12,16 +12,23 @@
             font-family: 'Open Sans', sans-serif;
         }
         h1 {
-            font-size: 80px;
+            font-size: 40px;
             font-weight: bold;
-            text-shadow: 2px 2px 4px #000000;
-            margin-top: 120px;
+            margin-top: 50px;
             margin-bottom: 50px;
         }
-        p {
+        .list-group {
+            margin-bottom: 50px;
+        }
+        .list-group-item {
             font-size: 24px;
             font-weight: bold;
-            text-shadow: 2px 2px 4px #000000;
+            background-color: #E6E6E6;
+            border-color: #CCCCCC;
+        }
+        .list-group-item:hover {
+            background-color: #CCCCCC;
+            border-color: #CCCCCC;
         }
         .btn-primary {
             background-color: #0066CC;
@@ -37,9 +44,18 @@
 <body>
 
 <div class="jumbotron">
-    <h1>코인 포트폴리오 매니저</h1>
-    <p>비트코인, 이더리움, 리플 등 다양한 암호화폐를 관리해보세요.</p>
-    <a href="/login"><button type="button" class="btn btn-primary btn-lg">로그인</button></a>
+    <h1>로그인<br><small>아래 목록에서 선택하세요.</small></h1>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <div class="list-group">
+                    <a href="#" class="list-group-item active">업비트</a>
+                </div>
+                <a href="#" class="btn btn-primary btn-lg btn-block">새로운 대상 등록하기</a>
+            </div>
+        </div>
+    </div>
+
 </div>
 
 </body>
