@@ -20,7 +20,7 @@ logging:
   level:
     org.springframework: info
   file:
-    path: /app
+    path: /app/log
 server:
   servlet:
     encoding:
