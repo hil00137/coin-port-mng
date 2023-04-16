@@ -1,6 +1,6 @@
 package com.mcedu.coinportmng.dto
 
-import kotlin.math.roundToLong
+import com.mcedu.coinportmng.extention.toPercent
 
 @JvmInline
 value class Ratio(val value: Double = 0.0) {
@@ -21,18 +21,7 @@ value class Ratio(val value: Double = 0.0) {
         return kotlin.math.abs(this.value)
     }
 
-    fun toPercent(underDigit: Int): Double {
-        var result = this.value * 100
-        if (underDigit > 0) {
-            var multiple = 1
-            for (i in 0 until  underDigit) {
-                multiple *= 10
-            }
-            result = (result * multiple).roundToLong().toDouble()
-            result /= multiple
-        }
-        return result
-    }
+    fun toPercent(underDigit: Int): Double = this.value.toPercent(underDigit)
 
     operator fun div(otherValue: Double): Ratio {
         return Ratio(this.value / otherValue)
