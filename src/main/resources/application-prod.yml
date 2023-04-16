@@ -1,6 +1,9 @@
 spring:
+  config:
+    activate:
+      on-profile: prod
   datasource:
-    url: jdbc:h2:file:./data/portdb
+    url: jdbc:h2:file:/app/data/portdb
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -17,11 +20,12 @@ logging:
   level:
     org.springframework: info
   file:
-    path: ./log
+    path: /app
 server:
   servlet:
     encoding:
       force-response: true
+
 url:
   upbit: https://api.upbit.com
   ubci: https://crix-api-cdn.upbit.com
