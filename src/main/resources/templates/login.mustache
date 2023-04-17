@@ -48,8 +48,7 @@
     <div class="container">
         <div class="row">
             <div class="col-md-6 col-md-offset-3">
-                <div class="list-group">
-                    <a href="#" class="list-group-item active">업비트</a>
+                <div id="account-list" class="list-group">
                 </div>
                 <a href="#" class="btn btn-primary btn-lg btn-block">새로운 대상 등록하기</a>
             </div>
@@ -59,4 +58,32 @@
 </div>
 
 </body>
+<script>
+    function goLogin(seq) {
+        console.log(seq)
+        //TODO: 로그인 후 메인페이지로 이동
+    }
+
+    const accountList = {
+        init: function () {
+            this.callList()
+        },
+        callList: async function () {
+            let response = await GET('/api/v1/upbit/access-info');
+            let targetList = document.getElementById('account-list');
+            if (response.data.length === 0) {
+                targetList.append('신규 대상을 등록해주세요!')
+                return
+            }
+            response.data.forEach((value, index) => {
+                value.name
+                value.seq
+
+                targetList.insertAdjacentHTML('beforeend', `<a href="javascript:goLogin(${value.seq})" class="list-group-item active">${value.name}</a>`)
+            })
+        }
+    }
+
+    accountList.init();
+</script>
 </html>
