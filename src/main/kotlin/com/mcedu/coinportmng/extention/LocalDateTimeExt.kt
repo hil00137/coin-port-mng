@@ -12,21 +12,13 @@ fun LocalTime.getSecondsOfDay(): Int {
 }
 
 fun LocalDateTime.getNextHour(): LocalDateTime {
-    return if (this.minute == 0) {
-        this
-    } else {
-        this.plusHours(1).withMinute(0)
-    }
+    return this.withMinute(0)
 }
 
 fun LocalDateTime.getNextDay(): LocalDateTime {
-    return if (this.hour == 9 && this.minute == 0) {
-        this
-    } else {
-        if (this.hour >= 9) {
-            this.plusDays(1)
-        } else {
-            this
-        }.withHour(9).withMinute(0)
+    var resultTime = this
+    if (this.hour <9) {
+        resultTime = resultTime.minusDays(1)
     }
+    return resultTime.withHour(9).withMinute(0)
 }

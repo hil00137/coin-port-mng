@@ -36,7 +36,7 @@ class SnapshotScheduler(
     @Scheduled(cron = "0 * * * * *")
     @Transactional
     fun snapShot() {
-        val now = LocalDateTime.now().withSecond(0).withNano(0)
+        val now = LocalDateTime.now().withSecond(0).withNano(0).minusMinutes(1)
         for (accessInfo in accessInfoRepository.findAll()) {
             innerSnapshot(accessInfo, now)
         }
