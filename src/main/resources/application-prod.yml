@@ -29,3 +29,5 @@ server:
 url:
   upbit: https://api.upbit.com
   ubci: https://crix-api-cdn.upbit.com
+slack:
+  send: true

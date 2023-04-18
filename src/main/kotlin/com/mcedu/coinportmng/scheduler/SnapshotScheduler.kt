@@ -7,11 +7,14 @@ import com.mcedu.coinportmng.entity.HourSnapshot
 import com.mcedu.coinportmng.entity.MinuteSnapshot
 import com.mcedu.coinportmng.extention.getNextDay
 import com.mcedu.coinportmng.extention.getNextHour
+import com.mcedu.coinportmng.extention.toCurrency
+import com.mcedu.coinportmng.extention.toPercent
 import com.mcedu.coinportmng.repository.AccessInfoRepository
 import com.mcedu.coinportmng.repository.DaySnapshotRepository
 import com.mcedu.coinportmng.repository.HourSnapshotRepository
 import com.mcedu.coinportmng.repository.MinuteSnapshotRepository
 import com.mcedu.coinportmng.service.PortfolioService
+import com.mcedu.coinportmng.service.SlackService
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
@@ -22,6 +25,7 @@ import kotlin.math.roundToLong
 
 @Service
 class SnapshotScheduler(
+    private val slackService: SlackService,
     private val accessInfoRepository: AccessInfoRepository,
     private val portfolioService: PortfolioService,
     private val minuteSnapshotRepository: MinuteSnapshotRepository,
@@ -37,9 +41,33 @@ class SnapshotScheduler(
     @Transactional
     fun snapShot() {
         val now = LocalDateTime.now().withSecond(0).withNano(0).minusMinutes(1)
+        val isSnapshotTime = now.hour == 9 && now.minute == 0
         for (accessInfo in accessInfoRepository.findAll()) {
             innerSnapshot(accessInfo, now)
+            if (isSnapshotTime) {
+                sendSnapshot(accessInfo, now)
+            }
         }
+    }
+
+    private fun sendSnapshot(accessInfo: AccessInfo, now: LocalDateTime) {
+        val target = now.minusDays(1)
+        val daySnapshot = daySnapshotRepository.findByAccessInfoAndTime(accessInfo, target) ?: return
+        val yesterdaySnapshot = daySnapshotRepository.findByAccessInfoAndTime(accessInfo, target.minusDays(1))
+
+        val title = daySnapshot.time.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+        var message = daySnapshot.totalMoney.toDouble().toCurrency() + "원"
+        if(yesterdaySnapshot != null) {
+            val percent =
+                ((daySnapshot.totalMoney - yesterdaySnapshot.totalMoney) / yesterdaySnapshot.totalMoney.toDouble()).toPercent(
+                    2
+                )
+
+            if (percent > 0) {
+                message += "(${percent}%)"
+            }
+        }
+        slackService.sendMessage(title = title, message = message)
     }
 
     private fun innerSnapshot(accessInfo: AccessInfo, now: LocalDateTime) {
