@@ -37,7 +37,7 @@ class SnapshotScheduler(
     private val pattern = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
 
-    @Scheduled(cron = "0 * * * * *")
+    @Scheduled(cron = "1 * * * * *")
     @Transactional
     fun snapShot() {
         val now = LocalDateTime.now().withSecond(0).withNano(0).minusMinutes(1)
