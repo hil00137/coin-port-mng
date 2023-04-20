@@ -22,7 +22,7 @@ class SnapshotService(
             "minute" -> minuteSnapshotRepository.findAllByAccessInfo(accessInfo).map { SnapshotDto(time = it.time, totalMoney = it.totalMoney, snapshot = it.snapshot) }
             "hour" -> hourSnapshotRepository.findAllByAccessInfo(accessInfo).map { SnapshotDto(time = it.time, totalMoney = it.totalMoney, snapshot = it.snapshot) }
             "day" -> daySnapshotRepository.findAllByAccessInfo(accessInfo).map { SnapshotDto(time = it.time, totalMoney = it.totalMoney, snapshot = it.snapshot) }
-            else -> throw RuntimeException("올바르지 않은 타입 [$type]입니다.\n가능한 타입은 'day' 입니다.")
+            else -> throw RuntimeException("올바르지 않은 타입 [$type]입니다.\n가능한 타입은 'minute', 'hour', 'day' 입니다.")
         }.sortedBy { it.time }
     }
 }
