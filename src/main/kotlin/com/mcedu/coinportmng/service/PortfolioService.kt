@@ -18,7 +18,8 @@ class PortfolioService(
     private val coinRepository: CoinRepository,
     private val portfolioRepository: PortfolioRepository,
     private val upbitService: UpbitService,
-    private val sessionService: SessionService
+    private val sessionService: SessionService,
+    private val marketService: MarketService
 ) {
 
     private val log = LoggerFactory.getLogger(this::class.java)
@@ -58,7 +59,7 @@ class PortfolioService(
     }
 
     fun getCurrentPortfolio(accessInfoSeq: Long): MutableMap<String, CoinPrice> {
-        val accounts = upbitService.getMyAccounts(accessInfoSeq)
+        val accounts = marketService.getMyAccounts(accessInfoSeq)
         val currencyStrs = accounts.map { it.currency }
         val coinMap = coinRepository.findAllById(currencyStrs).associateBy { it.ticker }
         val hasMarketWallet = accounts.filter { coinMap.containsKey(it.currency) || it.currency == "KRW" }

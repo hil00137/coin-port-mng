@@ -8,10 +8,21 @@ import org.springframework.stereotype.Component
 class HelloScheduler(
     private val slackService: SlackService
 ) {
+    private var marketStatus = true
 
     @Scheduled(cron = "0 0/10 * * * *")
     fun hello() {
-        slackService.sendMessage(title = "health-check" , message = "UP")
+        val message = if (marketStatus) {
+            "UP"
+        } else {
+            "DOWN"
+        }
+
+        slackService.sendMessage(title = "health-check" , message = message)
+    }
+
+    fun market(isUp: Boolean) {
+        marketStatus = isUp
     }
 
 }

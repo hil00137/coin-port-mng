@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.google.gson.Gson
 import com.mcedu.coinportmng.dto.*
+import com.mcedu.coinportmng.entity.AccessInfo
 import com.mcedu.coinportmng.repository.AccessInfoRepository
 import com.mcedu.coinportmng.type.UpbitIndex
 import org.slf4j.LoggerFactory
@@ -43,9 +44,7 @@ class UpbitService(
         })
     }
 
-    @Transactional(readOnly = true)
-    fun getMyAccounts(seq: Long): List<UpbitWalletInfo> {
-        val accessInfo = accessInfoRepository.findByIdOrNull(seq) ?: throw RuntimeException("존재하지 않는 저장소 정보입니다.")
+    fun getMyAccounts(accessInfo: AccessInfo): List<UpbitWalletInfo> {
         val algorithm = Algorithm.HMAC256(accessInfo.secretKey)
         val jwtToken = JWT.create()
             .withClaim("access_key", accessInfo.accessKey)
