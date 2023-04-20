@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository
 import java.time.LocalDateTime
 
 interface DaySnapshotRepository: JpaRepository<DaySnapshot, Long> {
+    fun findAllByAccessInfo(accessInfo: AccessInfo): List<DaySnapshot>
     fun deleteAllByAccessInfoAndTimeBefore(accessInfo: AccessInfo, time: LocalDateTime): Int
     fun findByAccessInfoAndTime(accessInfo: AccessInfo, time: LocalDateTime): DaySnapshot?
 }
