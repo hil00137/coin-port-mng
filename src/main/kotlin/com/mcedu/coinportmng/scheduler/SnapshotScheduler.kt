@@ -62,10 +62,7 @@ class SnapshotScheduler(
                 ((daySnapshot.totalMoney - yesterdaySnapshot.totalMoney) / yesterdaySnapshot.totalMoney.toDouble()).toPercent(
                     2
                 )
-
-            if (percent > 0) {
-                message += "(${percent}%)"
-            }
+            message += "(${percent}%)"
         }
         slackService.sendMessage(title = title, message = message)
     }
