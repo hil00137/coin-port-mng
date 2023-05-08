@@ -64,7 +64,7 @@ class SnapshotScheduler(
                 )
             message += "(${percent}%)"
         }
-        slackService.sendMessage(title = title, message = message)
+        slackService.sendMessage(title = title, message = message, channel = "report")
     }
 
     private fun innerSnapshot(accessInfo: AccessInfo, now: LocalDateTime) {

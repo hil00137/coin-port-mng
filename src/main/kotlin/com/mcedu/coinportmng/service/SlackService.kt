@@ -17,10 +17,14 @@ class SlackService {
     private val restTemplate: RestTemplate = RestTemplate()
 
     private val log = LoggerFactory.getLogger(this::class.java)
-    fun sendMessage(title: String = "", message: String = "") {
+    fun sendMessage(title: String = "", message: String = "", channel: String? = null) {
         val resultMessage = listOf(title, message).filter { it.isNotEmpty() }.joinToString("\n")
         if (sendSlackMessage == "true") {
-            val exchange = restTemplate.exchange<String>(slackUrl, HttpMethod.POST, HttpEntity(mapOf("text" to resultMessage)))
+            val body = hashMapOf("text" to resultMessage)
+            if (channel != null) {
+                body["channel"] = "#$channel"
+            }
+            val exchange = restTemplate.exchange<String>(slackUrl, HttpMethod.POST, HttpEntity(body))
             log.info("send $title : ${exchange.body}")
         } else {
             log.info("send $title : $message")
