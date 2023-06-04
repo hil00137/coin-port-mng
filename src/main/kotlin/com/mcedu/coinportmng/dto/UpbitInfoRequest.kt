@@ -10,3 +10,12 @@ data class UpbitInfoSaveRequest(
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     val expireDateTime: LocalDateTime
 )
+
+data class UpbitInfoUpdateRequest(
+    var seq: Long,
+    var name: String? = null,
+    val accessKey: String? = null,
+    val secretKey: String? = null,
+    @JsonFormat(shape = JsonFormat.Shape.STRING)
+    val expireDateTime: LocalDateTime? = null
+)

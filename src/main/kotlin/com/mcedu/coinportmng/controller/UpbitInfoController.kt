@@ -3,6 +3,7 @@ package com.mcedu.coinportmng.controller
 import com.mcedu.coinportmng.common.ResponseDto
 import com.mcedu.coinportmng.dto.AccessInfoDto
 import com.mcedu.coinportmng.dto.UpbitInfoSaveRequest
+import com.mcedu.coinportmng.dto.UpbitInfoUpdateRequest
 import com.mcedu.coinportmng.extention.getInfoSeq
 import com.mcedu.coinportmng.service.RepositoryInfoService
 import com.mcedu.coinportmng.type.CoinRepositoryType
@@ -25,6 +26,12 @@ class UpbitInfoController(
     fun saveAccessInfo(@RequestBody request: UpbitInfoSaveRequest): Long {
         log.info("{}", request)
         return repositoryInfoService.saveAccessInfo(request, CoinRepositoryType.UPBIT)
+    }
+
+    @PutMapping("/v1/upbit/access-info")
+    fun updateAccessInfo(@RequestBody request: UpbitInfoUpdateRequest): String {
+        log.info("{}", request)
+        return repositoryInfoService.updateAccessInfo(request, CoinRepositoryType.UPBIT)
     }
 
     @DeleteMapping("/v1/upbit/access-info/{seq}")

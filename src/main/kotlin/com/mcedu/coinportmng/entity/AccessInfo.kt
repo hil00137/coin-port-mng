@@ -24,13 +24,13 @@ data class AccessInfo(
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = Sequence.UPBIT_ACCESS_INFO + "_gen")
     val seq: Long?,
     @Column(name = "name", length = 20)
-    val name: String,
+    var name: String,
     @Column(name = "access_key", length = 50)
-    val accessKey: String,
+    var accessKey: String,
     @Column(name = "secret_key", length = 50)
-    val secretKey: String,
+    var secretKey: String,
     @Column(name = "expire_date_time")
-    val expireDateTime: LocalDateTime,
+    var expireDateTime: LocalDateTime,
     @Enumerated(EnumType.STRING)
     @Column(name = "repository_type", length = 20)
     val repositoryType: CoinRepositoryType,
