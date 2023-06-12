@@ -104,7 +104,7 @@ class UpbitScheduler(
 
     @Scheduled(cron = "0 * * * * *")
     @Transactional
-    fun rebalnceTargetCheck() {
+    fun rebalanceTargetCheck() {
         val now = LocalDateTime.now().withSecond(0)
         val rebalanceMngs = rebalanceMngRepository.findAllByActive()
         val executeSet = mutableSetOf<RebalanceMng>()

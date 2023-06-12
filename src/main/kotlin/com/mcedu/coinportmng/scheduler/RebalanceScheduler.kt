@@ -129,7 +129,7 @@ class RebalanceScheduler(
                 if (pair.price < marketMin) {
                     rebalanceCommands.add(Command.forRebalance(key))
                 } else {
-                    tempSellCommands.add(Command(CommandType.SELL, key, volume = balance, price = pair.price))
+                    tempSellCommands.add(Command.sell(key, volume = balance))
                 }
                 break
             }
@@ -140,7 +140,7 @@ class RebalanceScheduler(
             if (plan < pair.ratio) {
                 if (diffMoney >= marketMin) {
                     val volume = balance * ((diffMoney) / (currentPortfolio[key]?.price.orZero()))
-                    tempSellCommands.add(Command(CommandType.SELL, key, volume = volume, price = diffMoney))
+                    tempSellCommands.add(Command.sell(key, volume = volume))
                 } else {
                     log.info("$key - gap : ${diffMoney.roundToLong()}원 do not cell")
                 }
@@ -150,6 +150,10 @@ class RebalanceScheduler(
                 } else {
                     log.info("$key - gap : ${diffMoney.roundToLong()}원 do not buy")
                 }
+            }
+
+            if (currentPortfolio[key]?.price.orZero() < 7000 && tempSellCommands.none { it.ticker == key }) {
+                tempSellCommands.add(Command.sell(key, volume = balance))
             }
         }
 
